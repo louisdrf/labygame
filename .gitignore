@@ -2,4 +2,5 @@
 *.xcf
 *.bkp
 
+labygame-client/target
 labygame-server/target
