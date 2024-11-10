@@ -1,11 +1,6 @@
 use std::io::{prelude::*, BufReader};
 use std::net::{TcpListener, TcpStream};
-use serde::Serialize;
-
-#[derive(Serialize)]
-enum Response {
-    Welcome {version: u8}
-}
+use common::Response;
 
 fn handle_connection(mut stream: TcpStream) {
     let mut buf_reader = BufReader::new(&mut stream);

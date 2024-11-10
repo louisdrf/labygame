@@ -1,11 +1,6 @@
 use std::io::{Write, Read};
 use std::net::TcpStream;
-use serde::Deserialize;
-
-#[derive(Deserialize, Debug)]
-enum Response {
-    Welcome {version: u8}
-}
+use common::Response;
 
 fn main() {
     let mut stream = TcpStream::connect("127.0.0.1:7878").unwrap();
