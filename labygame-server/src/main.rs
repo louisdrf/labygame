@@ -3,20 +3,16 @@ use std::net::{TcpListener, TcpStream};
 use common::Response;
 
 fn handle_connection(mut stream: TcpStream) {
-    let mut buf_reader = BufReader::new(&mut stream);
-    let mut message = String::new();
+    let mut buffer = vec![0; 128];
+    let bytes_read = stream.read(&mut buffer).unwrap();
+    buffer.truncate(bytes_read);
 
-    match buf_reader.read_line(&mut message) {
-        Ok(_) => {
-            println!("Message received: {:?}", message);
-            if message.trim() == "Hello" {
-                let response = Response::Welcome { version: 1 };
-                let serialized = serde_json::to_string(&response).unwrap();
-                stream.write_all(serialized.as_bytes()).unwrap();
-                println!("Sent 'Welcome' message");
-            }
-        }
-        Err(_) => {}
+    let request: Response = serde_json::from_slice(&buffer).unwrap();
+    if let Response::Subscribe { name } = request {
+        println!("Received subscription request from: {}", name);
+        let response = Response::SubscribeResult(Ok(()));
+        let serialized = serde_json::to_vec(&response).unwrap();
+        stream.write_all(&serialized).unwrap();
     }
 }
 
