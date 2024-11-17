@@ -65,13 +65,13 @@ fn subscribe(stream: &mut TcpStream) {
             println!("Success Subscribe !");
         },
         Ok(Response::SubscribeResult(Err(SubscribeError::InvalidName))) => {
-            println!("Invalid name !")
+            eprintln!("Invalid name !")
         },
         Ok(Response::SubscribeResult(Err(SubscribeError::AlreadyRegistered))) => {
-            println!("Name already registered !")
+            eprintln!("Name already registered !")
         },
         Err(_) => println!("Error while reading the subscribe response"),
-        _ => println!("Wrong answer")
+        _ => eprintln!("Wrong answer")
     };
 }
 
