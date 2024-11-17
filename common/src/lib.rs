@@ -14,6 +14,43 @@ pub enum Response {
 }
 
 
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ActionResult {
+    Ok,
+    Completed,
+    Err(ActionError)
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ActionError {
+    InvalidMove
+}
+
+pub enum Action {
+    MoveTo(Move)
+}
+
+pub enum Move {
+    Left,
+    Right,
+    Top,
+    Bottom
+}
+
+impl Move {
+    pub fn to_string(&self) -> &str {
+        match self {
+            Move::Left   => "Left",
+            Move::Right  => "Right",
+            Move::Top    => "Top",
+            Move::Bottom => "Bottom"
+        }
+    }
+}
+
+
+
 #[derive(Debug)]
 pub struct CommandArgument {
     pub name: String,

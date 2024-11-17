@@ -6,7 +6,7 @@ use common::{Response, SubscribeError, CommandArgument, CommandArgumentsList};
 
 /**
  * param @arg command argument as "--arg_name=value"
- * @returns Option<CommandArgument> with parsed command name and value
+ * @returns Option<CommandArgument> with parsed argument name (--arg_name) and value
  */
 fn parse_command_argument(arg: &str) -> Option<CommandArgument> {
     let command_name_and_value: Vec<&str> = arg.splitn(2, '=').collect();
