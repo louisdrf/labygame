@@ -5,7 +5,7 @@ use common::{Response, SubscribeError, CommandArgument, CommandArgumentsList};
 
 
 /**
- * param @arg command argument as "--command=value"
+ * param @arg command argument as "--arg_name=value"
  * @returns Option<CommandArgument> with parsed command name and value
  */
 fn parse_command_argument(arg: &str) -> Option<CommandArgument> {
@@ -46,13 +46,13 @@ fn main() {
                     std::process::exit(1);
                 }
                 None => {
-                    eprintln!("Argument inconnu : {}", command_argument.name);
+                    eprintln!("Unknown argument name : {}", command_argument.name);
                     std::process::exit(1);
                 }
             }
         } 
         else {
-            eprintln!("Argument mal formaté : {}", arg);
+            eprintln!("Bad format for argument : {}", arg);
             std::process::exit(1);
         }
     }
@@ -67,11 +67,11 @@ fn launch_tcp_stream(server_address_with_port: &str) {
 
     match TcpStream::connect(&server_address_with_port) {
         Ok(mut tcp_stream) => {
-            println!("Connecté à {}", server_address_with_port);
+            println!("Connected to {}", server_address_with_port);
             subscribe(&mut tcp_stream);
         }
         Err(e) => {
-            eprintln!("Erreur : impossible de se connecter à {}: {}", server_address_with_port, e);
+            eprintln!("Error : connection to {} failed. Error: {}", server_address_with_port, e);
         }
     }
 }
