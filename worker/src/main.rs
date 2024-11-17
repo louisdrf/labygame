@@ -1,21 +1,21 @@
 use std::env;
 use std::net::TcpStream;
 use std::io::{Write, Read};
-use common::{Response, SubscribeError};
+use common::{Response, SubscribeError, CommandArgument};
 
 
-fn parse_command_argument(arg: &str) -> Option<(String, String)> {
-    let command_key_and_value: Vec<&str> = arg.splitn(2, '=').collect();
+fn parse_command_argument(arg: &str) -> Option<CommandArgument> {
+    let command_name_and_value: Vec<&str> = arg.splitn(2, '=').collect();
 
-    if command_key_and_value.len() == 2 {
-        let arg_name = command_key_and_value[0];
-        let arg_value = command_key_and_value[1];
+    if command_name_and_value.len() == 2 {
+        let arg_name = command_name_and_value[0];
+        let arg_value = command_name_and_value[1];
 
         if arg_name.starts_with("--") {
             let arg_name = arg_name.trim_start_matches("--").to_string();
             let arg_value = arg_value.to_string();
 
-            return Some((arg_name, arg_value));
+            return Some(CommandArgument { name: arg_name, value: arg_value });
         }
     }
 
@@ -29,12 +29,12 @@ fn main() {
     let mut port = String::from("8080");
 
     for arg in &args[1..] {
-        if let Some((arg_name, arg_value)) = parse_command_argument(arg) {
-            match arg_name.as_str() {
-                "port" => port = arg_value,
-                "address" => address = arg_value,
+        if let Some(command_argument) = parse_command_argument(arg) {
+            match command_argument.name.as_str() {
+                "port" => port = command_argument.value,
+                "address" => address = command_argument.value,
                 _ => {
-                    eprintln!("Argument inconnu : {}", arg_name);
+                    eprintln!("Argument inconnu : {}", command_argument.name);
                     std::process::exit(1);
                 }
             }

@@ -12,3 +12,10 @@ pub enum Response {
     Subscribe {name: String},
     SubscribeResult(Result<(), SubscribeError>),
 }
+
+
+#[derive(Debug)]
+pub struct CommandArgument {
+    pub name: String,
+    pub value: String,
+}
