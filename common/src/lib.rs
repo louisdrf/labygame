@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum SubscribeError {
@@ -13,7 +14,24 @@ pub enum Response {
     SubscribeResult(Result<(), SubscribeError>),
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Direction {
+    Left,
+    Right,
+    Top,
+    Bottom
+}
 
+impl Direction {
+    pub fn to_string(&self) -> &str {
+        match self {
+            Direction::Left   => "Left",
+            Direction::Right  => "Right",
+            Direction::Top    => "Top",
+            Direction::Bottom => "Bottom"
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ActionResult {
@@ -27,27 +45,26 @@ pub enum ActionError {
     InvalidMove
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+
 pub enum Action {
-    MoveTo(Move)
+    MoveTo(Direction)
 }
 
-pub enum Move {
-    Left,
-    Right,
-    Top,
-    Bottom
-}
-
-impl Move {
-    pub fn to_string(&self) -> &str {
+impl Action {
+    pub fn to_json(&self) -> Value {
         match self {
-            Move::Left   => "Left",
-            Move::Right  => "Right",
-            Move::Top    => "Top",
-            Move::Bottom => "Bottom"
+            Action::MoveTo(direction) => json!({
+                "Action": {
+                    "MoveTo": direction.to_string()
+                }
+            })
         }
     }
 }
+
+
+
 
 
 
