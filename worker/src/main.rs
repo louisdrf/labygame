@@ -5,34 +5,28 @@ use common::{Response, SubscribeError};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let default_port = "8778"; 
 
-    match args.len() {
-        3 => {
-            let server_address = &args[1];
-            let port = &args[2];
-            println!("{}:{}", server_address, port);
-            let address_with_port = format!("{}:{}", server_address, port); 
-            println!("Connexion à l'adresse : {}...", address_with_port);
-            launch_tcp_stream(&address_with_port);  
-        },
-        2 => {
-            let server_address = &args[1];
-            let address_with_port = format!("{}:{}", server_address, default_port); 
-            println!("Connexion à l'adresse : {}... (port par défaut)", address_with_port);
-            launch_tcp_stream(&address_with_port); 
-        },
-        1 => {
-            eprintln!("Erreur : aucune adresse spécifiée.");
-            eprintln!("Usage: worker [server_address]");
-            std::process::exit(1);
-        },
-        _ => {
-            eprintln!("Erreur : trop d'arguments spécifiés.");
-            eprintln!("Usage: worker [server_address]");
+    let mut address = String::from("127.0.0.1");
+    let mut port = String::from("8080");
+
+    for arg in &args[1..] {
+        if let Some((key, value)) = parse_command_option(arg) {
+            match key.as_str() {
+                "port" => port = value,
+                "address" => address = value,
+                _ => {
+                    eprintln!("Argument inconnu : {}", key);
+                    std::process::exit(1);
+                }
+            }
+        } else {
+            eprintln!("Argument mal formaté : {}", arg);
             std::process::exit(1);
         }
     }
+
+    let server_address_with_port = format!("{}:{}", address, port);
+    launch_tcp_stream(&server_address_with_port);
 }
 
 
@@ -75,3 +69,22 @@ fn subscribe(stream: &mut TcpStream) {
     };
 }
 
+
+
+fn parse_command_option(arg: &str) -> Option<(String, String)> {
+    let parts: Vec<&str> = arg.splitn(2, '=').collect();
+
+    if parts.len() == 2 {
+        let key = parts[0];
+        let value = parts[1];
+
+        if key.starts_with("--") {
+            let key = key.trim_start_matches("--").to_string();
+            let value = value.to_string();
+
+            return Some((key, value));
+        }
+    }
+
+    None
+}
