@@ -1,7 +1,7 @@
 use std::env;
 use std::net::TcpStream;
 use std::io::{Write, Read};
-use common::{Response, SubscribeError, CommandArgument};
+use common::{Response, SubscribeError, CommandArgument, CommandArgumentsList};
 
 
 /**
@@ -16,7 +16,7 @@ fn parse_command_argument(arg: &str) -> Option<CommandArgument> {
         let arg_value = command_name_and_value[1];
 
         if arg_name.starts_with("--") {
-            let arg_name = arg_name.trim_start_matches("--").to_string();
+            let arg_name = arg_name.to_string();
             let arg_value = arg_value.to_string();
 
             return Some(CommandArgument { name: arg_name, value: arg_value });
@@ -30,19 +30,28 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     let mut address = String::from("127.0.0.1");
-    let mut port = String::from("8080");
+    let mut port = String::from("8778");
 
     for arg in &args[1..] {
+
         if let Some(command_argument) = parse_command_argument(arg) {
-            match command_argument.name.as_str() {
-                "port" => port = command_argument.value,
-                "address" => address = command_argument.value,
-                _ => {
+
+            let command_name: &str = command_argument.get_name_as_str();
+
+            match CommandArgumentsList::from_command_name(command_name) {
+                Some(CommandArgumentsList::Port)    => port = command_argument.value,
+                Some(CommandArgumentsList::Address) => address = command_argument.value,
+                Some(CommandArgumentsList::GroupName) => {
+                    eprintln!("Argument not handled yet : {}", command_argument.name);
+                    std::process::exit(1);
+                }
+                None => {
                     eprintln!("Argument inconnu : {}", command_argument.name);
                     std::process::exit(1);
                 }
             }
-        } else {
+        } 
+        else {
             eprintln!("Argument mal formaté : {}", arg);
             std::process::exit(1);
         }
