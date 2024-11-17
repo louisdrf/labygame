@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum SubscribeError {
@@ -8,10 +7,18 @@ pub enum SubscribeError {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
+pub enum Payload {
     Welcome {version: u8},
     Subscribe {name: String},
     SubscribeResult(Result<(), SubscribeError>),
+    Action(Action),
+    ActionResult(Result<(), ActionError>)
+}
+
+impl Payload {
+    pub fn move_to(direction: Direction) -> Self {
+        Payload::Action(Action::MoveTo(direction))
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -52,14 +59,8 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn to_json(&self) -> Value {
-        match self {
-            Action::MoveTo(direction) => json!({
-                "Action": {
-                    "MoveTo": direction.to_string()
-                }
-            })
-        }
+    pub fn to_vec(&self) -> Result<Vec<u8>, serde_json::Error> {
+        serde_json::to_vec(&self)
     }
 }
 
