@@ -5,7 +5,7 @@ use common::{Response, SubscribeError};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let default_port = "7878"; 
+    let default_port = "8778"; 
 
     match args.len() {
         3 => {
