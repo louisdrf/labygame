@@ -5,3 +5,4 @@
 common/target
 labygame-client/target
 labygame-server/target
+worker/target
