@@ -12,7 +12,45 @@ $ ./server --help
 ```
 
 ```
-Usage: server [OPTIONS]
+Usage: server [OPTIONS] <COMMAND>
+
+Commands:
+  run      Run server
+  version  Show detailed version
+  decode   Decoding tools
+  encode   Encoding tools
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -v, --verbose
+          Display detail
+
+          log will show code path
+
+      --debug
+          Log additional debug info
+
+      --trace
+          Log additional details
+
+  -h, --help
+          Print help (see a summary with '-h')
+```
+
+Lors de la mise au point, pour voir quelques détails sur la communication worker<->server, l'option `--debug` est
+recommandée.
+
+Il existe ainsi plusieurs sous-commandes, la plus important est celle nommée `run` (je vous laisse découvrir les autres
+de la même manière):
+
+```
+./server run --help
+```
+
+```
+Run server
+
+Usage: server run [OPTIONS]
 
 Options:
       --port <PORT>
@@ -26,17 +64,6 @@ Options:
           Should be different from localhost to allow external connections
 
           [default: localhost]
-
-  -v, --verbose
-          Display detail
-
-          log will show code path
-
-      --debug
-          Log additional debug info
-
-      --trace
-          Log additional details
 
       --screen <SCREEN>
           Initial screen size (width,height) at startup
@@ -63,21 +90,20 @@ Options:
       --output-maze <OUTPUT_MAZE>
           Generate grid and export it
 
-  -V, --version
-          Print version and exit
+      --team-size <TEAM_SIZE>
+          Team size
 
+          [default: 3]
+          
   -h, --help
           Print help (see a summary with '-h')
 ```
-
-Lors de la mise au point, pour voir quelques détails sur la communication worker<->server, l'option `--debug` est
-recommandée.
 
 Par défaut, l'interface réseau d'écoute est celle associée à `localhost`. Ainsi, si vous souhaitez l'utiliser sur un
 réseau (local par exemple), il faudra lui préciser l'interface d'écoute sous la forme:
 
 ```bash
-$ ./server --host-address=192.168.1.99
+$ ./server run --host-address=192.168.1.99
 ```
 
 (l'adresse n'est qu'un exemple)
@@ -101,3 +127,28 @@ $ ./server --host-address=192.168.1.99
   ```bash
   apt install libegl1 libegl1-mesa
   ```
+  
+## Exemple de sortie debug
+
+```
+$ server --debug run
+```
+
+```
+2024-11-17T22:36:30.163431Z DEBUG Read message size: 29
+2024-11-17T22:36:30.163450Z DEBUG Read string message: {"Action":{"MoveTo":"Front"}}
+2024-11-17T22:36:30.163455Z DEBUG Read struct message: Action(MoveTo(Front))
+2024-11-17T22:36:30.163459Z DEBUG Action for 'hungry_durian/Player#1'
+2024-11-17T22:36:30.163475Z DEBUG Player { player_id: 0, team_id: 0 } at (49, 49) towards East with encoded view jiucAjGa//cpapa
+#######
+#######
+•-•-•##
+|  G|##
+• • •##
+  | |##
+•-• •##
+
+2024-11-17T22:36:30.163483Z DEBUG Write struct message: RadarView(EncodedRadarView("jiucAjGa//cpapa"))
+2024-11-17T22:36:30.163488Z DEBUG Write message size: 31
+2024-11-17T22:36:30.163491Z DEBUG Write string message: {"RadarView":"jiucAjGa//cpapa"}
+```
