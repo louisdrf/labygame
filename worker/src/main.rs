@@ -36,15 +36,15 @@ fn main() {
 }
 
 
-fn launch_tcp_stream(server_address: &str) {
+fn launch_tcp_stream(server_address_with_port: &str) {
 
-    match TcpStream::connect(&server_address) {
+    match TcpStream::connect(&server_address_with_port) {
         Ok(mut tcp_stream) => {
-            println!("Connecté à {}", server_address);
+            println!("Connecté à {}", server_address_with_port);
             subscribe(&mut tcp_stream);
         }
         Err(e) => {
-            eprintln!("Erreur : impossible de se connecter à {}: {}", server_address, e);
+            eprintln!("Erreur : impossible de se connecter à {}: {}", server_address_with_port, e);
         }
     }
 }

@@ -1,1 +1,0 @@
-/Users/louisdrf/Documents/ESGI4/rust/labygame/worker/target/debug/worker: /Users/louisdrf/Documents/ESGI4/rust/labygame/common/src/lib.rs /Users/louisdrf/Documents/ESGI4/rust/labygame/worker/src/main.rs
