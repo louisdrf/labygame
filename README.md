@@ -178,6 +178,13 @@ Le jour de la soutenance orale, vous serez évalués sur:
   Le niveau minimal fonctionnel du client défini la note de 10/20.
 * Vous aurez aussi une modification, un petit développement à faire en live sur votre code pendant la soutenance.
 
+Le barème suit le principe de notation du règlement intérieur ESGI:
+  * 0 à 4 : Écarts critiques par rapport aux objectifs
+  * 5 à 9 : Écarts majeurs par rapport aux objectifs
+  * 10 à 12 : Objectifs globalement atteints avec des écarts mineurs
+  * 13 à 15 : Ensemble des objectifs atteints
+  * 16 à 20 : Objectifs dépassés
+
 ## Bonus possibles:
 
 * Réaliser une interface pour le client et/ou le serveur.
@@ -207,9 +214,9 @@ Tous les messages se passent sur un flux TCP qui doit rester ouvert pendant tout
 
 Tous les messages sont de la forme:
 
-| Message size                  | JSON message     | other data or message... |
-|-------------------------------|------------------|--------------------------|
-| (u32 encodé en Little Endian) | (encodé en utf8) |                          |
+| Message size                  | JSON message     | next message... |
+|-------------------------------|------------------|-----------------|
+| (u32 encodé en Little Endian) | (encodé en utf8) |                 |
 
 ### Description des messages
 
