@@ -5,8 +5,8 @@ et en diagonales).
 
 Elle est centrée sur le joueur et représente une zone de taille 3x3 cellules, avec leurs murs:
 
-* 12 horizontaux (ci-dessous représenté par `━`)
-* 12 verticaux (ci-dessous représenté par `┃`)
+* 12 murs horizontaux (ci-dessous représenté par `━`)
+* 12 murs verticaux (ci-dessous représenté par `┃`)
 * 9 cellules portant un [`RadarItem`](#les-items-sur-le-radar) (voir section suivante)
 
 ```
@@ -19,7 +19,7 @@ Elle est centrée sur le joueur et représente une zone de taille 3x3 cellules, 
 •━•━•━•
 ```
 
-Cependant, à chaque instant, seuls les cellules visibles sont découvertes; les autres restant 'inconnues'
+Cependant, à chaque instant, seuls les cellules visibles sont découvertes, les autres restant _inconnues_:
 
 ```
 #######
@@ -31,21 +31,30 @@ Cependant, à chaque instant, seuls les cellules visibles sont découvertes; les
 •-• •-•
 ```
 
-Représentation d'un RadarView. Cette représentation n'est pas contractuelle car c'est uniquement la structure logique
-qui compte. Sur la précédente représentation, les `#` représentent des éléments (murs ou cellules) non visibles du fait
+La représentation ci-dessus n'est pas contractuelle car c'est uniquement la structure logique qui compte
+et qui vous est fournie de manière encodée (cette même représentation est utilisée par le serveur en mode debug).
+Sur cette représentation, les `#` représentent des éléments (murs ou cellules) non visibles du fait
 de murs bloquant la vision depuis la cellule centrale (où se trouve le joueur).
 
 ## Les items sur le radar
 
-Les items identifient:
+Les items identifient (les symboles entre parenthèses correspondent à la représentation que fournit le serveur en mode
+debug):
 
 * les indices (`H`) et la cible (`G`)
 * la présence de joueur de la même équipe (`P`), d'une autre équipe (`O`) ou d'un monstre (`M`).
 
 Sur une même cellule, il peut y avoir
 
-* un indice ou (exclusif) la cible
-* ou (inclusif) un joueur de la même équipe ou (exclusif) d'une autre équipe ou (exclusif) d'un monstre.
+* ou (inclusif)
+  * un indice 
+  * ou (exclusif) la cible
+  * ou (exclusif) ni indice ni cible
+*  ou (inclusif)
+  * un joueur de la même équipe
+  * ou (exclusif) un joueur d'une autre équipe
+  * ou (exclusif) un monstre
+  * ou (exclusif) ni joueur ni monstre.
 
 Les items sur le radar sont encodés de manière compacte afin:
 
@@ -54,7 +63,7 @@ Les items sur le radar sont encodés de manière compacte afin:
 3. Différencier clairement les entités amies, ennemies et neutres
 4. Marquer les objectifs et les indices de manière distincte
 
-C'est sous cette forme (convertie en hexadécimale) que vous recevrez les items du radar.
+C'est sous cette forme encodée sur 4 bits que vous recevrez les items du radar.
 
 ### Cas spécial
 
@@ -96,10 +105,10 @@ Note : Toute valeur avec les quatre bits à 1 (`1111`) indique une donnée inval
 
 ## L'encodage de la vue Radar
 
-La vue radar est transmise par le réseau sous une forme compressée, non visuelle (contrairemenet au représentation
+La vue radar est transmise par le réseau sous une forme compressée, non visuelle (contrairement aux représentations
 ci-dessus).
 
-Pour se faire, vous devez:
+Voici la procédure d'encodage:
 
 1. convertir la structure en une suite d'octets dans l'ordre
 

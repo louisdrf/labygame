@@ -1,6 +1,6 @@
 # Projet Rust: *Sauve qui peut* <br> Architecture des Logiciels - 4<sup>ème</sup> année - ESGI
 
-![tema](images/team-with-title.png "Team 'Sauve qui peut'")
+![team](images/team-with-title.png "Team 'Sauve qui peut'")
 
 Les membres de votre équipe sont projetés dans un labyrinthe inconnu, loin les uns des autres.
 Vous n'avez que des talkies-walkies pour communiquer.
@@ -20,23 +20,25 @@ Rien à signaler pour l'instant
 * `Sun Nov 17 23:16:30 CET 2024`: Le processus d'enregistrement des équipes et des joueurs est stabilisé.
 
 * Notez que des variantes sont en approche:
+    * Pour l'instant, la cible est toujours en bas à droite, cela changera bientôt...
+  
     * Pour l'instant, dès qu'un joueur est inscrit il participe à la partie. A terme, il faudra attendre l'inscription
       complète de l'équipe pour que le jeu démarre.
 
     * Pour l'instant les parties sont non scorées. Un simple log sur le serveur donne le nombre de mouvements effectués
       quand un joueur trouve la sortie.
 
-    * Challenges
+    * Challenges (contenu assuré, faisant partie du projet)
         * _spoiler_: saurez-vous sauver un de vos coéquipiers en danger (avec de la résolution de labyrinthe au passage)
 
           inclus l'introduction des types `Challenge`, `ChallengeAnswer`, `ChallengeError`
 
-    * Monster is coming
+    * Monster is coming (contenu optionnel, _for fun_)
         * _spoiler_: seul face à un monstre, vous perdrez; unis vous gagnerez
 
           (inclus une modification du type `Action`)
 
-    * Team fight
+    * Team fight (contenu optionnel, _for fun_)
         * _spoiler_: seuls les membres d’une même équipe peuvent être sur une même case...
 
           (inclus une modification du type `Action`)
@@ -47,8 +49,8 @@ Rien à signaler pour l'instant
 
 1. Le serveur démarre en attente d'équipes pour jouer
 2. Chaque équipe se connecte au serveur et s'enregistre avec un nom unique.
-3. Le serveur vous renvoie le nombre de joueurs devant à fournir pour la partie et un code d'accès avec lequel les
-   joueurs pourront s'inscrire.
+3. Le serveur vous renvoie le nombre de joueurs à fournir pour chaque équipe 
+   et un code d'accès avec lequel les joueurs pourront s'inscrire.
 4. Les membres se connectent avant le timeout avec le code d'accès de l'équipe
 
 ### L'évasion

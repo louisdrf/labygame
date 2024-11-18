@@ -1,6 +1,6 @@
 # Spécifications encodage textuel de données binaires b64
 
-## Fonction `encode`
+## L'encodage binaire -> texte
 
 ### Entrée
 
@@ -8,7 +8,7 @@
 
 ### Sortie
 
-- Chaîne de caractères encodée
+- Chaîne de caractères encodée (cette fonction ne peut pas échouer)
 
 ### Comportement
 
@@ -34,11 +34,11 @@
     * \+ et / (2 caractères encodant les valeurs 62 et 63)
 
   ```
-  |01234567|01234567|01234567| : 3 octets 
+  |01234567|01234567|01234567| : 3 octets d'entrée
   |012345|670123|456701|234567| : 4 caractères encodés sur 6 bits
   ```
 
-## Fonction `decode`
+## Le décodage
 
 ### Entrée
 
@@ -46,16 +46,14 @@
 
 ### Sortie
 
-- En cas de succès : Données binaires décodées
-- En cas d'erreur : Message d'erreur explicitant le problème d'encodage
+- En cas de succès : données binaires décodées
+- En cas d'erreur : message d'erreur explicitant le problème d'encodage
 
 ### Comportement
 
 - Convertit une représentation b64 en données binaires originales
 - Un padding de 0 (éventuellement virtuel, non matérialisé dans le stockage) complète si nécessaire la chaîne de
-  caractères pour atteindre une taille qui soit un multiple de 4
-- Détecte et signale les caractères invalides
-- Valide le format global de l'entrée
+  caractères pour atteindre une taille qui soit un multiple de 4 afin d'appliquer l'algorithme par paquet de 4 caractères.
 
 ### Erreurs possibles
 

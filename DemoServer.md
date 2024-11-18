@@ -127,6 +127,10 @@ $ ./server run --host-address=192.168.1.99
   ```bash
   apt install libegl1 libegl1-mesa
   ```
+
+## Exemple de partie visualisée avec le serveur
+
+<img src="images/random_maze_in_action.png" width="200">
   
 ## Exemple de sortie debug
 
