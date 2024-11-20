@@ -83,15 +83,14 @@ fn launch_tcp_stream(server_address_with_port: &str) {
 
 
 fn say_hello(stream: &mut TcpStream) {
-    let request = Payload::Hello;
-    let message: Vec<u8> = to_tcp_message(&request);
+    let message: Vec<u8> = to_tcp_message(&Payload::Hello);
 
     match stream.write_all(&message) {
         Ok(()) => {
-            println!("Message écrit avec succès dans le writer.");
+            println!("Message written succesfully in the writer.");
         }
         Err(e) => {
-            eprintln!("Erreur lors de l'écriture dans le writer : {}", e);
+            eprintln!("Error while writing in the writer : {}", e);
         }
     }
 }

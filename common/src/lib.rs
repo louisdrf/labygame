@@ -8,6 +8,7 @@ pub enum SubscribePlayerError {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Payload {
+    Hello,
     Welcome {version: u8},
     SubscribePlayer {name: String},
     SubscribePlayerResult(Result<(), SubscribePlayerError>),
