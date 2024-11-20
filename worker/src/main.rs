@@ -3,7 +3,7 @@ use std::net::TcpStream;
 use std::io::{Write, Read};
 use common::{
     Payload, 
-    SubscribeError, 
+    SubscribePlayerError, 
     CommandArgument, 
     CommandArgumentsList, 
     Action, 
@@ -35,7 +35,7 @@ fn parse_command_argument(arg: &str) -> Option<CommandArgument> {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let mut address = String::from("127.0.0.1");
+    let mut address = String::from("localhost");
     let mut port = String::from("8778");
 
     for arg in &args[1..] {
@@ -83,29 +83,38 @@ fn launch_tcp_stream(server_address_with_port: &str) {
 }
 
 fn subscribe(stream: &mut TcpStream) {
-    // Request
-    let request = Payload::Subscribe {name: String::from("Player1")};
-    let serialized = serde_json::to_vec(&request).unwrap();
-    stream.write_all(&serialized).unwrap();
+    let request = Payload::SubscribePlayer {name: String::from("Player1")};
 
-    // Payload
+    let serialized = serde_json::to_vec(&request).unwrap();
+    let message_size = serialized.len() as u32;
+
+    println!("Serialized payload: {:?}", String::from_utf8_lossy(&serialized));
+    println!("Payload size: {}", message_size);
+
+    let mut message = Vec::new();
+    message.extend(&message_size.to_le_bytes()); // ajouter la taille du message au payload
+    message.extend(serialized);                  // ajouter les données serialisées
+
+    stream.write_all(&message).unwrap();
+
     let mut buffer = vec![0; 128];
     let bytes_read = stream.read(&mut buffer).unwrap();
     buffer.truncate(bytes_read);
 
     match serde_json::from_slice(&buffer) {
-        Ok(Payload::SubscribeResult(Ok(()))) => {
-            println!("Success Subscribe !");
+        Ok(Payload::SubscribePlayerResult(Ok(()))) => {
+            println!("Success SubscribePlayer !");
         },
-        Ok(Payload::SubscribeResult(Err(SubscribeError::InvalidName))) => {
+        Ok(Payload::SubscribePlayerResult(Err(SubscribePlayerError::InvalidName))) => {
             eprintln!("Invalid name !")
         },
-        Ok(Payload::SubscribeResult(Err(SubscribeError::AlreadyRegistered))) => {
+        Ok(Payload::SubscribePlayerResult(Err(SubscribePlayerError::AlreadyRegistered))) => {
             eprintln!("Name already registered !")
         },
         Err(_) => println!("Error while reading the subscribe Payload"),
         _ => eprintln!("Wrong answer")
     };
 }
+
 
 

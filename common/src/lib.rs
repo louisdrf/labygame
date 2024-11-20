@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum SubscribeError {
+pub enum SubscribePlayerError {
     AlreadyRegistered,
     InvalidName,
 }
@@ -9,8 +9,8 @@ pub enum SubscribeError {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Payload {
     Welcome {version: u8},
-    Subscribe {name: String},
-    SubscribeResult(Result<(), SubscribeError>),
+    SubscribePlayer {name: String},
+    SubscribePlayerResult(Result<(), SubscribePlayerError>),
     Action(Action),
     ActionResult(Result<(), ActionError>)
 }
