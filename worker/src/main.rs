@@ -5,9 +5,7 @@ use common::{
     Payload, 
     SubscribePlayerError, 
     CommandArgument, 
-    CommandArgumentsList, 
-    Action, 
-    Direction};
+    CommandArgumentsList};
 
 
 /**
@@ -74,6 +72,7 @@ fn launch_tcp_stream(server_address_with_port: &str) {
     match TcpStream::connect(&server_address_with_port) {
         Ok(mut tcp_stream) => {
             println!("Connected to {}", server_address_with_port);
+            say_hello(&mut tcp_stream);
             subscribe(&mut tcp_stream);
         }
         Err(e) => {
@@ -82,24 +81,48 @@ fn launch_tcp_stream(server_address_with_port: &str) {
     }
 }
 
+
+fn say_hello(stream: &mut TcpStream) {
+    let request = Payload::Hello;
+    let message: Vec<u8> = to_tcp_message(&request);
+
+    match stream.write_all(&message) {
+        Ok(()) => {
+            println!("Message écrit avec succès dans le writer.");
+        }
+        Err(e) => {
+            eprintln!("Erreur lors de l'écriture dans le writer : {}", e);
+        }
+    }
+}
+
 fn subscribe(stream: &mut TcpStream) {
     let request = Payload::SubscribePlayer {name: String::from("Player1")};
+    let message: Vec<u8> = to_tcp_message(&request);
 
-    let serialized = serde_json::to_vec(&request).unwrap();
-    let message_size = serialized.len() as u32;
-
-    println!("Serialized payload: {:?}", String::from_utf8_lossy(&serialized));
-    println!("Payload size: {}", message_size);
-
-    let mut message = Vec::new();
-    message.extend(&message_size.to_le_bytes()); // ajouter la taille du message au payload
-    message.extend(serialized);                  // ajouter les données serialisées
-
-    stream.write_all(&message).unwrap();
+    match stream.write_all(&message) {
+        Ok(()) => {
+            println!("Message written succesfully in the writer.");
+        }
+        Err(e) => {
+            eprintln!("Error while writing in the writer : {}", e);
+        }
+    }
 
     let mut buffer = vec![0; 128];
-    let bytes_read = stream.read(&mut buffer).unwrap();
-    buffer.truncate(bytes_read);
+    match stream.read(&mut buffer) {
+        Ok(0) => {
+            // 0 octet lu : la connexion est fermée proprement
+            println!("Server closed connection.");
+        }
+        Ok(bytes_read) => {
+            println!("Received message : {} bytes.", bytes_read);
+            buffer.truncate(bytes_read); 
+        }
+        Err(e) => {
+            eprintln!("Error while reading : {}", e);
+        }
+    };
 
     match serde_json::from_slice(&buffer) {
         Ok(Payload::SubscribePlayerResult(Ok(()))) => {
@@ -114,6 +137,20 @@ fn subscribe(stream: &mut TcpStream) {
         Err(_) => println!("Error while reading the subscribe Payload"),
         _ => eprintln!("Wrong answer")
     };
+}
+
+fn to_tcp_message(payload: &Payload) -> Vec<u8> {
+    let serialized = serde_json::to_vec(payload).unwrap();
+    let message_size = serialized.len() as u32;
+
+    println!("Serialized payload: {:?}", String::from_utf8_lossy(&serialized));
+    println!("Payload size: {}", message_size);
+
+    let mut message = Vec::new();
+    message.extend(&message_size.to_le_bytes()); // ajouter la taille du message au payload
+    message.extend(serialized);                  // ajouter les données serialisées
+
+    message
 }
 
 
