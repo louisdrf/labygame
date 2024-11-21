@@ -2,7 +2,8 @@ use std::env;
 use std::net::TcpStream;
 use std::io::{Write, Read};
 use common::{
-    CommandArgument, CommandArgumentsList, Payload};
+    CommandArgument, CommandArgumentsList, Payload, RegisterTeamResult, RegistrationError, ServerPayload};
+use serde_json::ser;
 
 
 /**
@@ -69,7 +70,8 @@ fn launch_tcp_stream(server_address_with_port: &str) {
     match TcpStream::connect(&server_address_with_port) {
         Ok(mut tcp_stream) => {
             println!("Connected to {}", server_address_with_port);
-            subscribe(&mut tcp_stream);
+            register_team(&mut tcp_stream, "team_zoza");
+            //subscribe(&mut tcp_stream);
         }
         Err(e) => {
             eprintln!("Error : connection to {} failed. Error: {}", server_address_with_port, e);
@@ -77,30 +79,37 @@ fn launch_tcp_stream(server_address_with_port: &str) {
     }
 }
 
+fn register_team(stream: &mut TcpStream, team_name: &str) {
+    let register_team_message = Payload::RegisterTeam { 
+        name: team_name.to_string() 
+    };
 
-fn subscribe(stream: &mut TcpStream) {
+    send_message_to_server(stream, &register_team_message);
+
+    match receive_register_team_message_from_server(stream) {
+        RegisterTeamResult::Ok {
+            expected_players,
+            registration_token,
+        } => {
+            println!("Inscription réussie !");
+            println!("Nombre de joueurs attendus : {}", expected_players);
+            println!("Token d'inscription : {}", registration_token);
+        }
+        
+        RegisterTeamResult::Err(err) => {
+            eprintln!("Erreur lors de la réception de la réponse : {:?}", err);
+        }
+    }
+}
+
+
+fn subscribe(stream: &mut TcpStream, registration_token: &str, player_name: &str) {
     let message = Payload::SubscribePlayer {
-        name: String::from("Player1"),
-        registration_token: String::from("empty")
+        name: player_name.to_string(),
+        registration_token: registration_token.to_string()
     };
     
     send_message_to_server(stream, &message);
-
-    let mut buffer = vec![0; 128];
-    match stream.read(&mut buffer) {
-        Ok(0) => {
-            // 0 octet lu : la connexion est fermée proprement
-            println!("Server closed connection.");
-        }
-        Ok(bytes_read) => {
-            println!("Received message : {} bytes.", bytes_read);
-            buffer.truncate(bytes_read); 
-        }
-        Err(e) => {
-            eprintln!("Error while reading : {}", e);
-        }
-    };
-
 }
 
 fn to_tcp_message(payload: &Payload) -> Vec<u8> {
@@ -117,7 +126,6 @@ fn to_tcp_message(payload: &Payload) -> Vec<u8> {
     message
 }
 
-
 fn send_message_to_server(stream: &mut TcpStream, message: &Payload) {
     let encoded_message: Vec<u8> = to_tcp_message(&message);
 
@@ -131,3 +139,17 @@ fn send_message_to_server(stream: &mut TcpStream, message: &Payload) {
     }
 }
 
+fn receive_register_team_message_from_server(stream: &mut TcpStream) -> RegisterTeamResult {
+    let mut message_size_buffer = [0u8; 4];  // 4 octets pour la taille du message
+    let _ = stream.read_exact(&mut message_size_buffer).unwrap();
+    let message_size = u32::from_le_bytes(message_size_buffer) as usize;
+
+    // Lire le payload JSON envoyé par le serveur
+    let mut buffer = vec![0u8; message_size];
+    let _ = stream.read_exact(&mut buffer).unwrap();
+
+    // Désérialiser le JSON dans un Payload
+    let server_response = serde_json::from_slice(&buffer).unwrap();
+
+    server_response
+}
