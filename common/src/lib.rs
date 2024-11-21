@@ -3,13 +3,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Payload {
-    Hello,
-    Welcome {version: u8},
     RegisterTeam { name: String },
-    RegisterTeamResult(RegisterTeamResult),
-    SubscribePlayer {name: String},
-    SubscribePlayerResult(SubscribePlayerResult),
+    SubscribePlayer { name: String, registration_token: String },
     Action(Action),
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ServerPayload {
+    RegisterTeamResult(RegisterTeamResult),
+    SubscribePlayerResult(SubscribePlayerResult),
     ActionResult(Result<(), ActionError>)
 }
 

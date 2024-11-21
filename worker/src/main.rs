@@ -79,7 +79,10 @@ fn launch_tcp_stream(server_address_with_port: &str) {
 
 
 fn subscribe(stream: &mut TcpStream) {
-    let request = Payload::SubscribePlayer {name: String::from("Player1")};
+    let request = Payload::SubscribePlayer {
+        name: String::from("Player1"),
+        registration_token: String::from("empty")
+    };
     let message: Vec<u8> = to_tcp_message(&request);
 
     match stream.write_all(&message) {
