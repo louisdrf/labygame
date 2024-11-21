@@ -2,10 +2,7 @@ use std::env;
 use std::net::TcpStream;
 use std::io::{Write, Read};
 use common::{
-    Payload, 
-    SubscribePlayerError, 
-    CommandArgument, 
-    CommandArgumentsList};
+    CommandArgument, CommandArgumentsList, Payload};
 
 
 /**
@@ -72,7 +69,6 @@ fn launch_tcp_stream(server_address_with_port: &str) {
     match TcpStream::connect(&server_address_with_port) {
         Ok(mut tcp_stream) => {
             println!("Connected to {}", server_address_with_port);
-            say_hello(&mut tcp_stream);
             subscribe(&mut tcp_stream);
         }
         Err(e) => {
@@ -81,19 +77,6 @@ fn launch_tcp_stream(server_address_with_port: &str) {
     }
 }
 
-
-fn say_hello(stream: &mut TcpStream) {
-    let message: Vec<u8> = to_tcp_message(&Payload::Hello);
-
-    match stream.write_all(&message) {
-        Ok(()) => {
-            println!("Message written succesfully in the writer.");
-        }
-        Err(e) => {
-            eprintln!("Error while writing in the writer : {}", e);
-        }
-    }
-}
 
 fn subscribe(stream: &mut TcpStream) {
     let request = Payload::SubscribePlayer {name: String::from("Player1")};
@@ -123,19 +106,6 @@ fn subscribe(stream: &mut TcpStream) {
         }
     };
 
-    match serde_json::from_slice(&buffer) {
-        Ok(Payload::SubscribePlayerResult(Ok(()))) => {
-            println!("Success SubscribePlayer !");
-        },
-        Ok(Payload::SubscribePlayerResult(Err(SubscribePlayerError::InvalidName))) => {
-            eprintln!("Invalid name !")
-        },
-        Ok(Payload::SubscribePlayerResult(Err(SubscribePlayerError::AlreadyRegistered))) => {
-            eprintln!("Name already registered !")
-        },
-        Err(_) => println!("Error while reading the subscribe Payload"),
-        _ => eprintln!("Wrong answer")
-    };
 }
 
 fn to_tcp_message(payload: &Payload) -> Vec<u8> {

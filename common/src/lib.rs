@@ -1,17 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum SubscribePlayerError {
-    AlreadyRegistered,
-    InvalidName,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Payload {
     Hello,
     Welcome {version: u8},
+    RegisterTeam { name: String },
+    RegisterTeamResult(RegisterTeamResult),
     SubscribePlayer {name: String},
-    SubscribePlayerResult(Result<(), SubscribePlayerError>),
+    SubscribePlayerResult(SubscribePlayerResult),
     Action(Action),
     ActionResult(Result<(), ActionError>)
 }
@@ -21,6 +18,32 @@ impl Payload {
         Payload::Action(Action::MoveTo(direction))
     }
 }
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum SubscribePlayerResult { 
+    Ok, 
+    Err(RegistrationError) 
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum RegistrationError {
+    AlreadyRegistered,
+    InvalidName
+}
+
+
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum RegisterTeamResult { 
+    Ok { 
+        expected_players: u8, 
+        registration_token: String 
+    }, 
+    Err(RegistrationError) 
+}
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Direction {
@@ -50,7 +73,8 @@ pub enum ActionResult {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ActionError {
-    InvalidMove
+    InvalidMove,
+    CannotPassThroughWall
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -67,10 +91,6 @@ impl Action {
 
 
 
-
-
-
-#[derive(Debug)]
 pub struct CommandArgument {
     pub name: String,
     pub value: String,
@@ -85,7 +105,6 @@ impl CommandArgument {
         &self.value.as_str()
     }
 }
-
 
 pub enum CommandArgumentsList {
     Port,
