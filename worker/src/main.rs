@@ -79,20 +79,12 @@ fn launch_tcp_stream(server_address_with_port: &str) {
 
 
 fn subscribe(stream: &mut TcpStream) {
-    let request = Payload::SubscribePlayer {
+    let message = Payload::SubscribePlayer {
         name: String::from("Player1"),
         registration_token: String::from("empty")
     };
-    let message: Vec<u8> = to_tcp_message(&request);
-
-    match stream.write_all(&message) {
-        Ok(()) => {
-            println!("Message written succesfully in the writer.");
-        }
-        Err(e) => {
-            eprintln!("Error while writing in the writer : {}", e);
-        }
-    }
+    
+    send_message_to_server(stream, &message);
 
     let mut buffer = vec![0; 128];
     match stream.read(&mut buffer) {
@@ -126,4 +118,16 @@ fn to_tcp_message(payload: &Payload) -> Vec<u8> {
 }
 
 
+fn send_message_to_server(stream: &mut TcpStream, message: &Payload) {
+    let encoded_message: Vec<u8> = to_tcp_message(&message);
+
+    match stream.write_all(&encoded_message) {
+        Ok(()) => {
+            println!("Message written succesfully in the writer.");
+        }
+        Err(e) => {
+            eprintln!("Error while writing in the writer : {}", e);
+        }
+    }
+}
 
