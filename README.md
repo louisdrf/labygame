@@ -13,15 +13,17 @@ Rien à signaler pour l'instant
 
 ## Changements
 
+* `Tue Nov 26 09:42:09 CET 2024`: Plus besoin de faire un fork (car cela ne serait plus possible de le rendre privé);
+  vous pouvez partir d'un dépôt vierge. N'oubliez pas de m'en donner l'accès au moins en lecture (CI incluse).
+* `Sun Nov 17 23:16:30 CET 2024`: Le processus d'enregistrement des équipes et des joueurs est stabilisé.
+* `Wed Nov 13 22:15:28 CET 2024`: Les indices `Hint` sont désormais actifs
 * `Wed Nov 13 22:15:28 CET 2024`: `ActionError` remplace `ActionResult`. Un mouvement légal n'est pas suivi d'un message
   de validation. C'est la
   prochaine vue qui est immédiatement envoyée.
-* `Wed Nov 13 22:15:28 CET 2024`: Les indices `Hint` sont désormais actifs
-* `Sun Nov 17 23:16:30 CET 2024`: Le processus d'enregistrement des équipes et des joueurs est stabilisé.
 
 * Notez que des variantes sont en approche:
     * Pour l'instant, la cible est toujours en bas à droite, cela changera bientôt...
-  
+
     * Pour l'instant, dès qu'un joueur est inscrit il participe à la partie. A terme, il faudra attendre l'inscription
       complète de l'équipe pour que le jeu démarre.
 
@@ -49,7 +51,7 @@ Rien à signaler pour l'instant
 
 1. Le serveur démarre en attente d'équipes pour jouer
 2. Chaque équipe se connecte au serveur et s'enregistre avec un nom unique.
-3. Le serveur vous renvoie le nombre de joueurs à fournir pour chaque équipe 
+3. Le serveur vous renvoie le nombre de joueurs à fournir pour chaque équipe
    et un code d'accès avec lequel les joueurs pourront s'inscrire.
 4. Les membres se connectent avant le timeout avec le code d'accès de l'équipe
 
@@ -128,8 +130,8 @@ Score = nombre_de_mouvements / nb_de_participants
 * Le code doit remis sous Git (github ou gitlab) **avec** une archive déposée dans MyGES (c'est cette archive qui fait
   foi en cas de litige).
 
-  Le projet Git devra être créé à partir d'un *fork* du projet portant le sujet (et n'oubliez pas de m'en donner l'accès
-  en lecture).
+  Vous n'êtes plus obligés de démarrer votre projet depuis un *fork* du dépôt du sujet, mais soyez vigilant aux
+  mises-à-jour de celui-ci (et n'oubliez pas de m'y donner accès).
 
 * Le code doit être fonctionnel sous Linux, macOS et Windows
 
@@ -179,11 +181,12 @@ Le jour de la soutenance orale, vous serez évalués sur:
 * Vous aurez aussi une modification, un petit développement à faire en live sur votre code pendant la soutenance.
 
 Le barème suit le principe de notation du règlement intérieur ESGI:
-  * 0 à 4 : Écarts critiques par rapport aux objectifs
-  * 5 à 9 : Écarts majeurs par rapport aux objectifs
-  * 10 à 12 : Objectifs globalement atteints avec des écarts mineurs
-  * 13 à 15 : Ensemble des objectifs atteints
-  * 16 à 20 : Objectifs dépassés
+
+* 0 à 4 : Écarts critiques par rapport aux objectifs
+* 5 à 9 : Écarts majeurs par rapport aux objectifs
+* 10 à 12 : Objectifs globalement atteints avec des écarts mineurs
+* 13 à 15 : Ensemble des objectifs atteints
+* 16 à 20 : Objectifs dépassés
 
 ## Bonus possibles:
 
