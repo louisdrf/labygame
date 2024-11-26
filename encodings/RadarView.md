@@ -47,14 +47,14 @@ debug):
 Sur une même cellule, il peut y avoir
 
 * ou (inclusif)
-  * un indice 
-  * ou (exclusif) la cible
-  * ou (exclusif) ni indice ni cible
-*  ou (inclusif)
-  * un joueur de la même équipe
-  * ou (exclusif) un joueur d'une autre équipe
-  * ou (exclusif) un monstre
-  * ou (exclusif) ni joueur ni monstre.
+    * un indice
+    * ou (exclusif) la cible
+    * ou (exclusif) ni indice ni cible
+* ou (inclusif)
+    * un joueur de la même équipe
+    * ou (exclusif) un joueur d'une autre équipe
+    * ou (exclusif) un monstre
+    * ou (exclusif) ni joueur ni monstre.
 
 Les items sur le radar sont encodés de manière compacte afin:
 
@@ -112,10 +112,10 @@ Voici la procédure d'encodage:
 
 1. convertir la structure en une suite d'octets dans l'ordre
 
-(en commençant par en haute à droite, puis, ligne par ligne de haut en bas et de gauche à droite):
+(en commençant par en haut à gauche, puis, ligne par ligne de haut en bas et de gauche à droite):
 
-* Les 12 passages horizontaux (sur 12 * 2 bits = 24 bits = 3 octets)
-* Les 12 passages verticaux (sur 12 * 2 bits = 24 bits = 3 octets)
+* Les 12 passages horizontaux (sur 12 * 2 bits = 24 bits = 3 octets écrits comme un nombre en little endian)
+* Les 12 passages verticaux (sur 12 * 2 bits = 24 bits = 3 octets écrits comme un nombre en little endian)
 * Les 9 éléments des cellules (sur 9 * 4 bits = 36 bits ~ 5 octets, avec un padding de 0 sur les 4 bits de poids faible)
 
 Les passages sont encodés ainsi:
@@ -127,3 +127,62 @@ Les passages sont encodés ainsi:
 Les éléments de cellules sont encodés comme décrits [précédemment](#les-items-sur-le-radar).
 
 2. encodage textuel de la séquence d'octets (cf [binary_text_encoding](./binary_text.md))
+
+## Exemple complet de décodage
+
+* Soit la vue encodée:
+  ```
+  ieysGjGO8papd/a
+  ```
+* Le décodage b64 donne en mixte binaire (pour les passages) / héxadécimal (pour les cellules):
+   ```
+  00100000 01000110 00010010 10000000 10011000 00101000 F0 F0 0F 0F F0
+  ```
+
+  cf `echo -n ieysGjGO8papd/a | server decode b64 - binfile`
+
+  puis `python3 -c "print(' '.join([format(b,['08b','02X'][i>=6])for(i,b)in enumerate(open('binfile','rb').read())]))"`
+
+* Ce qui donne les 3 blocs:
+    * Passage horizontaux: `00100000 01000110 00010010`
+
+      => `00010010 01000110 00100000` (inversion des octets car écrit en little endian)
+
+      => `000100 100100 011000 100000` (4 lignes de 3 passages)
+
+    * Passage verticaux: `10000000 10011000 00101000`
+
+      => `00101000 10011000 10000000` (inversion des octets car écrit en little endian)
+
+      => `00101000 10011000 10000000` (3 lignes de 4 passages)
+
+    * Les cellules: `F0 F0 0F 0F F0` => `F0F 00F 0FF`
+      (le `0` final étant du padding)
+
+* On peut alors lire
+    * Passage horizontaux (en regroupant par 2 bits consécutifs):
+        * Undefined, Open, Undefined (ligne 1),
+        * Wall, Open, Undefined (ligne 2),
+        * Open, Wall, Undefined (ligne 3),
+        * Wall, Undefined, Undefined (ligne 4).
+    * Passage verticaux (en regroupant par 2 bits consécutifs):
+        * Undefined, Wall, Wall, Undefined (ligne 1)
+        * Wall, Open, Wall, Undefined (ligne 2),
+        * Wall, Undefined, Undefined, Undefined (ligne 3).
+    * Les cellules (une cellule par caractère hexa):
+        * Undefined, Rien, Undefined (ligne 1),
+        * Rien, Rien (votre position), Undefined (ligne 2),
+        * Rien, Undefined, Undefined (ligne 3).
+
+C'est-à-dire visuellement:
+
+```
+##• •##
+##| |##
+•-• •##
+|   |##
+• •-•##
+| #####
+•-•####
+```
+
