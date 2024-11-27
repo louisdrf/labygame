@@ -3,7 +3,7 @@ use std::net::TcpStream;
 use std::io::{Write, Read};
 use common::{
     CommandArgument, CommandArgumentsList, Payload, RegisterTeamResult, RegistrationError, ServerPayload};
-use serde_json::ser;
+use serde_json::{ser, Error};
 
 
 /**
@@ -59,22 +59,17 @@ fn main() {
 
     let server_address_with_port = format!("{}:{}", address, port);
 
-    launch_tcp_stream(&server_address_with_port);
+    let mut stream = get_tcp_stream(&server_address_with_port);
+
+    register_team(&mut stream, "team1");
 }
 
 
-fn launch_tcp_stream(server_address_with_port: &str) {
-
-    match TcpStream::connect(&server_address_with_port) {
-        Ok(mut tcp_stream) => {
-            println!("Connected to {}", server_address_with_port);
-            register_team(&mut tcp_stream, "team2");
-        }
-        Err(e) => {
-            eprintln!("Error : connection to {} failed. Error: {}", server_address_with_port, e);
-        }
-    }
+fn get_tcp_stream(server_address_with_port: &str) -> TcpStream  {
+    let tcp_stream: TcpStream = TcpStream::connect(&server_address_with_port).unwrap();
+    tcp_stream
 }
+
 
 fn register_team(stream: &mut TcpStream, team_name: &str) {
     let register_team_payload = Payload::RegisterTeam { 
@@ -88,6 +83,8 @@ fn register_team(stream: &mut TcpStream, team_name: &str) {
             println!("Inscription réussie !");
             println!("Nombre de joueurs attendus : {}", register_team_response.expected_players);
             println!("Token d'inscription : {}", register_team_response.registration_token);
+
+            subscribe(stream, &register_team_response.registration_token, "joueur1");
         }
         ServerPayload::RegisterTeamResult(Err(registration_error)) => {
             match registration_error {
@@ -101,12 +98,12 @@ fn register_team(stream: &mut TcpStream, team_name: &str) {
 
 
 fn subscribe(stream: &mut TcpStream, registration_token: &str, player_name: &str) {
-    let payload = Payload::SubscribePlayer {
+    let subscribe_player_payload = Payload::SubscribePlayer {
         name: player_name.to_string(),
         registration_token: registration_token.to_string()
     };
     
-    send_payload_to_server(stream, &payload);
+    send_payload_to_server(stream, &subscribe_player_payload);
 }
 
 fn to_tcp_payload(payload: &Payload) -> Vec<u8> {
