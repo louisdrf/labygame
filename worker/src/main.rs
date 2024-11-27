@@ -77,13 +77,13 @@ fn launch_tcp_stream(server_address_with_port: &str) {
 }
 
 fn register_team(stream: &mut TcpStream, team_name: &str) {
-    let register_team_message = Payload::RegisterTeam { 
+    let register_team_payload = Payload::RegisterTeam { 
         name: team_name.to_string() 
     };
 
-    send_message_to_server(stream, &register_team_message);
+    send_payload_to_server(stream, &register_team_payload);
 
-    match receive_message_from_server(stream) {
+    match receive_payload_from_server(stream) {
         ServerPayload::RegisterTeamResult(Ok(register_team_response)) => {
             println!("Inscription réussie !");
             println!("Nombre de joueurs attendus : {}", register_team_response.expected_players);
@@ -101,34 +101,34 @@ fn register_team(stream: &mut TcpStream, team_name: &str) {
 
 
 fn subscribe(stream: &mut TcpStream, registration_token: &str, player_name: &str) {
-    let message = Payload::SubscribePlayer {
+    let payload = Payload::SubscribePlayer {
         name: player_name.to_string(),
         registration_token: registration_token.to_string()
     };
     
-    send_message_to_server(stream, &message);
+    send_payload_to_server(stream, &payload);
 }
 
-fn to_tcp_message(payload: &Payload) -> Vec<u8> {
+fn to_tcp_payload(payload: &Payload) -> Vec<u8> {
     let serialized = serde_json::to_vec(payload).unwrap();
-    let message_size = serialized.len() as u32;
+    let payload_size = serialized.len() as u32;
 
     println!("Serialized payload: {:?}", String::from_utf8_lossy(&serialized));
-    println!("Payload size: {}", message_size);
+    println!("Payload size: {}", payload_size);
 
-    let mut message = Vec::new(); 
-    message.extend(&message_size.to_le_bytes()); // ajouter la taille du message au payload
-    message.extend(serialized);                  // ajouter les données serialisées
+    let mut payload = Vec::new(); 
+    payload.extend(&payload_size.to_le_bytes()); // ajouter la taille du payload au payload
+    payload.extend(serialized);                  // ajouter les données serialisées
 
-    message
+    payload
 }
 
-fn send_message_to_server(stream: &mut TcpStream, message: &Payload) {
-    let encoded_message: Vec<u8> = to_tcp_message(&message);
+fn send_payload_to_server(stream: &mut TcpStream, payload: &Payload) {
+    let encoded_payload: Vec<u8> = to_tcp_payload(&payload);
 
-    match stream.write_all(&encoded_message) {
+    match stream.write_all(&encoded_payload) {
         Ok(()) => {
-            println!("Message written succesfully in the writer.");
+            println!("payload written succesfully in the writer.");
         }
         Err(e) => {
             eprintln!("Error while writing in the writer : {}", e);
@@ -136,14 +136,14 @@ fn send_message_to_server(stream: &mut TcpStream, message: &Payload) {
     }
 }
 
-fn receive_message_from_server(stream: &mut TcpStream) -> ServerPayload {
+fn receive_payload_from_server(stream: &mut TcpStream) -> ServerPayload {
     
-    let mut message_size_buffer = [0u8; 4];
-    stream.read_exact(&mut message_size_buffer).unwrap();
-    let message_size = u32::from_le_bytes(message_size_buffer) as usize;
+    let mut payload_size_buffer = [0u8; 4];
+    stream.read_exact(&mut payload_size_buffer).unwrap();
+    let payload_size = u32::from_le_bytes(payload_size_buffer) as usize;
 
-    let mut buffer = vec![0u8; message_size];
-    let _ = stream.read_exact(&mut buffer).unwrap();
+    let mut buffer = vec![0u8; payload_size];
+    stream.read_exact(&mut buffer).unwrap();
 
     let server_response: ServerPayload = serde_json::from_slice(&buffer).unwrap();
 
