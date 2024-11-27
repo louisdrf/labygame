@@ -1,4 +1,4 @@
-use std::env;
+use std::{env};
 use std::net::TcpStream;
 use std::io::{Write, Read};
 use common::{
@@ -33,6 +33,7 @@ fn main() {
 
     let mut address = String::from("localhost");
     let mut port = String::from("8778");
+    let mut team_name: String = String::from("team1");
 
     for arg in &args[1..] {
 
@@ -43,10 +44,7 @@ fn main() {
             match CommandArgumentsList::from_command_name(command_name) {
                 Some(CommandArgumentsList::Port)    => port = command_argument.value,
                 Some(CommandArgumentsList::Address) => address = command_argument.value,
-                Some(CommandArgumentsList::GroupName) => {
-                    eprintln!("Argument not handled yet : {}", command_argument.name);
-                    std::process::exit(1);
-                }
+                Some(CommandArgumentsList::GroupName) => team_name = command_argument.value,
                 None => {
                     eprintln!("Unknown argument name : {}", command_argument.name);
                     std::process::exit(1);
@@ -54,7 +52,7 @@ fn main() {
             }
         } 
         else {
-            eprintln!("Bad format for argument : {}", arg);
+            eprintln!("Bad format for argument : {}. Expected : --arg=value", arg);
             std::process::exit(1);
         }
     }
@@ -70,8 +68,7 @@ fn launch_tcp_stream(server_address_with_port: &str) {
     match TcpStream::connect(&server_address_with_port) {
         Ok(mut tcp_stream) => {
             println!("Connected to {}", server_address_with_port);
-            register_team(&mut tcp_stream, "team_zoza");
-            //subscribe(&mut tcp_stream);
+            register_team(&mut tcp_stream, "team2");
         }
         Err(e) => {
             eprintln!("Error : connection to {} failed. Error: {}", server_address_with_port, e);
@@ -86,19 +83,19 @@ fn register_team(stream: &mut TcpStream, team_name: &str) {
 
     send_message_to_server(stream, &register_team_message);
 
-    match receive_register_team_message_from_server(stream) {
-        RegisterTeamResult::Ok {
-            expected_players,
-            registration_token,
-        } => {
+    match receive_message_from_server(stream) {
+        ServerPayload::RegisterTeamResult(Ok(register_team_response)) => {
             println!("Inscription réussie !");
-            println!("Nombre de joueurs attendus : {}", expected_players);
-            println!("Token d'inscription : {}", registration_token);
+            println!("Nombre de joueurs attendus : {}", register_team_response.expected_players);
+            println!("Token d'inscription : {}", register_team_response.registration_token);
         }
-        
-        RegisterTeamResult::Err(err) => {
-            eprintln!("Erreur lors de la réception de la réponse : {:?}", err);
+        ServerPayload::RegisterTeamResult(Err(registration_error)) => {
+            match registration_error {
+                RegistrationError::AlreadyRegistered => println!("Team already registered"),
+                RegistrationError::InvalidName => println!("Invalid name for team.")
+            }
         }
+        _ => println!("Response not handled yet.")
     }
 }
 
@@ -119,7 +116,7 @@ fn to_tcp_message(payload: &Payload) -> Vec<u8> {
     println!("Serialized payload: {:?}", String::from_utf8_lossy(&serialized));
     println!("Payload size: {}", message_size);
 
-    let mut message = Vec::new();
+    let mut message = Vec::new(); 
     message.extend(&message_size.to_le_bytes()); // ajouter la taille du message au payload
     message.extend(serialized);                  // ajouter les données serialisées
 
@@ -139,17 +136,18 @@ fn send_message_to_server(stream: &mut TcpStream, message: &Payload) {
     }
 }
 
-fn receive_register_team_message_from_server(stream: &mut TcpStream) -> RegisterTeamResult {
-    let mut message_size_buffer = [0u8; 4];  // 4 octets pour la taille du message
-    let _ = stream.read_exact(&mut message_size_buffer).unwrap();
+fn receive_message_from_server(stream: &mut TcpStream) -> ServerPayload {
+    
+    let mut message_size_buffer = [0u8; 4];
+    stream.read_exact(&mut message_size_buffer).unwrap();
     let message_size = u32::from_le_bytes(message_size_buffer) as usize;
 
-    // Lire le payload JSON envoyé par le serveur
     let mut buffer = vec![0u8; message_size];
     let _ = stream.read_exact(&mut buffer).unwrap();
 
-    // Désérialiser le JSON dans un Payload
-    let server_response = serde_json::from_slice(&buffer).unwrap();
+    let server_response: ServerPayload = serde_json::from_slice(&buffer).unwrap();
 
     server_response
 }
+ 
+
