@@ -11,7 +11,7 @@ pub enum Payload {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ServerPayload {
-    RegisterTeamResult(RegisterTeamResult),
+    RegisterTeamResult(Result<RegisterTeamOk, RegistrationError>),
     SubscribePlayerResult(SubscribePlayerResult),
     ActionResult(Result<(), ActionError>)
 }
@@ -20,6 +20,12 @@ impl Payload {
     pub fn move_to(direction: Direction) -> Self {
         Payload::Action(Action::MoveTo(direction))
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RegisterTeamOk {
+    pub expected_players: u8, 
+    pub registration_token: String
 }
 
 
