@@ -66,8 +66,10 @@ pub enum ActionResult {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ActionError {
-    InvalidMove,
-    CannotPassThroughWall
+    CannotPassThroughWall, 
+    NoRunningChallenge, 
+    SolveChallengeFirst, 
+    InvalidChallengeSolution
 }
 
 

@@ -4,27 +4,6 @@ use common::client_args::{ CommandArgument, CommandArgumentsList };
 use common::payloads::{ Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
 
 mod payloads_utils;
-/**
- * param @arg command argument as "--arg_name=value"
- * @returns Option<CommandArgument> with parsed argument name (--arg_name) and value
- */
-fn parse_command_argument(arg: &str) -> Option<CommandArgument> {
-    let command_name_and_value: Vec<&str> = arg.splitn(2, '=').collect();
-
-    if command_name_and_value.len() == 2 {
-        let arg_name = command_name_and_value[0];
-        let arg_value = command_name_and_value[1];
-
-        if arg_name.starts_with("--") {
-            let arg_name = arg_name.to_string();
-            let arg_value = arg_value.to_string();
-
-            return Some(CommandArgument { name: arg_name, value: arg_value });
-        }
-    }
-
-    None
-}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -61,12 +40,38 @@ fn main() {
 }
 
 
+/**
+ * param @arg command argument as "--arg_name=value"
+ * @returns Option<CommandArgument> with parsed argument name (--arg_name) and value
+ */
+fn parse_command_argument(arg: &str) -> Option<CommandArgument> {
+    let command_name_and_value: Vec<&str> = arg.splitn(2, '=').collect();
+
+    if command_name_and_value.len() == 2 {
+        let arg_name = command_name_and_value[0];
+        let arg_value = command_name_and_value[1];
+
+        if arg_name.starts_with("--") {
+            let arg_name = arg_name.to_string();
+            let arg_value = arg_value.to_string();
+
+            return Some(CommandArgument { name: arg_name, value: arg_value });
+        }
+    }
+
+    None
+}
+
+
 fn get_tcp_stream(server_address_with_port: &str) -> TcpStream  {
     let tcp_stream: TcpStream = TcpStream::connect(&server_address_with_port).unwrap();
     tcp_stream
 }
 
 
+/**
+ * send RegisterTeam payload to server and handle response
+ */
 fn register_team(team_name: &str, server_address_with_port: &str) {
     let mut stream = get_tcp_stream(&server_address_with_port);
 
@@ -92,7 +97,10 @@ fn register_team(team_name: &str, server_address_with_port: &str) {
     }
 }
 
-
+/**
+ * send a SubscribePlayer payload to server, handle response
+ * then handle RadarView server payload reception
+ */
 fn subscribe(server_address_with_port: &str, player_name: &str, registration_token: &str) {
     let mut stream = get_tcp_stream(&server_address_with_port);
 
