@@ -8,6 +8,11 @@ pub enum Payload {
     Action(Action),
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Action {
+    MoveTo(Direction)
+}
+
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ServerPayload {
@@ -86,14 +91,4 @@ pub enum ActionError {
     CannotPassThroughWall
 }
 
-#[derive(Serialize, Deserialize, Debug)]
 
-pub enum Action {
-    MoveTo(Direction)
-}
-
-impl Action {
-    pub fn to_vec(&self) -> Result<Vec<u8>, serde_json::Error> {
-        serde_json::to_vec(&self)
-    }
-}
