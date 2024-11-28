@@ -1,9 +1,9 @@
 use std::env;
 use std::net::TcpStream;
-use std::io::{Write, Read};
 use common::client_args::{ CommandArgument, CommandArgumentsList };
 use common::payloads::{ Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
 
+mod payloads_utils;
 /**
  * param @arg command argument as "--arg_name=value"
  * @returns Option<CommandArgument> with parsed argument name (--arg_name) and value
@@ -72,15 +72,15 @@ fn register_team(team_name: &str, server_address_with_port: &str) {
 
     let register_team_payload = Payload::RegisterTeam { name: team_name.to_string() };
 
-    send_payload_to_server(&mut stream, &register_team_payload);
+    payloads_utils::send_payload_to_server(&mut stream, &register_team_payload);
 
-    match receive_payload_from_server(&mut stream) {
+    match payloads_utils::receive_payload_from_server(&mut stream) {
         ServerPayload::RegisterTeamResult(Ok(register_team_response)) => {
             println!("Inscription réussie !");
             println!("Nombre de joueurs attendus : {}", register_team_response.expected_players);
             println!("Token d'inscription : {}", register_team_response.registration_token);
 
-            //subscribe(server_address_with_port, "player1", &register_team_response.registration_token);
+            subscribe(server_address_with_port, "player1", &register_team_response.registration_token);
         }
         ServerPayload::RegisterTeamResult(Err(registration_error)) => {
             match registration_error {
@@ -101,10 +101,10 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
         registration_token : registration_token.to_string()
     };
     
-    send_payload_to_server(&mut stream, &subscribe_player_payload);
+    payloads_utils::send_payload_to_server(&mut stream, &subscribe_player_payload);
 
     // receive  player subscription confirmation
-    match receive_payload_from_server(&mut stream) {
+    match payloads_utils::receive_payload_from_server(&mut stream) {
         ServerPayload::SubscribePlayerResult(SubscribePlayerResult::Ok) => {
             println!("Player subscribtion succeed !");
         }
@@ -118,7 +118,7 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
     }
 
     // receive radar view
-    match receive_payload_from_server(&mut stream) {
+    match payloads_utils::receive_payload_from_server(&mut stream) {
         ServerPayload::RadarView(radar_view) => {
             println!("Received radar view : {}", radar_view);
         }
@@ -126,45 +126,4 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
     }
 }
 
-fn to_tcp_payload(payload: &Payload) -> Vec<u8> {
-    let serialized = serde_json::to_vec(payload).unwrap();
-    let payload_size = serialized.len() as u32;
-
-    println!("Serialized payload: {:?}", String::from_utf8_lossy(&serialized));
-    println!("Payload size: {}", payload_size);
-
-    let mut payload = Vec::new(); 
-    payload.extend(&payload_size.to_le_bytes()); // ajouter la taille du payload au payload
-    payload.extend(serialized);                  // ajouter les données serialisées
-
-    payload
-}
-
-fn send_payload_to_server(stream: &mut TcpStream, payload: &Payload) {
-    let encoded_payload: Vec<u8> = to_tcp_payload(&payload);
-
-    match stream.write_all(&encoded_payload) {
-        Ok(()) => {
-            println!("payload written succesfully in the writer.");
-        }
-        Err(e) => {
-            eprintln!("Error while writing in the writer : {}", e);
-        }
-    }
-}
-
-fn receive_payload_from_server(stream: &mut TcpStream) -> ServerPayload {
-    
-    let mut payload_size_buffer = [0u8; 4];
-    stream.read_exact(&mut payload_size_buffer).unwrap();
-    let payload_size = u32::from_le_bytes(payload_size_buffer) as usize;
-
-    let mut buffer = vec![0u8; payload_size];
-    stream.read_exact(&mut buffer).unwrap();
-
-    let server_response: ServerPayload = serde_json::from_slice(&buffer).unwrap();
-
-    server_response
-}
- 
 
