@@ -24,7 +24,7 @@ pub enum Action {
 pub enum ServerPayload {
     RegisterTeamResult(Result<RegisterTeamOk, RegistrationError>),
     SubscribePlayerResult(SubscribePlayerResult),
-    ActionResult(Result<(), ActionError>),
+    ActionError(ActionError),
     RadarView(String)
 }
 
@@ -59,12 +59,6 @@ pub enum SubscribePlayerResult {
     Err(RegistrationError) 
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum ActionResult {
-    Ok,
-    Completed,
-    Err(ActionError)
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ActionError {
