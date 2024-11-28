@@ -7,62 +7,65 @@ Vous n'avez que des talkies-walkies pour communiquer.
 
 Votre objectif est de sortir rapidement du labyrinthe avant que...
 
-## Errata
-
-Rien à signaler pour l'instant
-
 ## Changements
 
+* `Thu Nov 28 19:05:34 CET 2024`:
+    * On garantit désormais qu'un indice est toujours envoyé avec la vue courante et que le
+      challenge met en pause l'envoi de vue.
+    * Le challenge SecretSumModulo a été ajouté. Il ne manque plus que le challenge SOS.
+    * Le client doit avoir **deux** stratégies configurables dynamiquement. Vous pouvez très bien focaliser vos efforts
+      sur une seule stratégie et en avoir une autre un peu _dummy_
+      (l'intérêt est de obliger à utiliser des traits dynamiques).
 * `Tue Nov 26 09:42:09 CET 2024`: Plus besoin de faire un fork (car cela ne serait plus possible de le rendre privé);
   vous pouvez partir d'un dépôt vierge. N'oubliez pas de m'en donner l'accès au moins en lecture (CI incluse).
 * `Sun Nov 17 23:16:30 CET 2024`: Le processus d'enregistrement des équipes et des joueurs est stabilisé.
 * `Wed Nov 13 22:15:28 CET 2024`: Les indices `Hint` sont désormais actifs
 * `Wed Nov 13 22:15:28 CET 2024`: `ActionError` remplace `ActionResult`. Un mouvement légal n'est pas suivi d'un message
-  de validation. C'est la
-  prochaine vue qui est immédiatement envoyée.
+  de validation. C'est la prochaine vue qui est immédiatement envoyée.
 
-* Notez que des variantes sont en approche:
-    * Pour l'instant, la cible est toujours en bas à droite, cela changera bientôt...
+## Changements à venir
 
-    * Pour l'instant, dès qu'un joueur est inscrit il participe à la partie. A terme, il faudra attendre l'inscription
-      complète de l'équipe pour que le jeu démarre.
+Notez que des updates sont en approche:
 
-    * Pour l'instant les parties sont non scorées. Un simple log sur le serveur donne le nombre de mouvements effectués
-      quand un joueur trouve la sortie.
+* Pour l'instant, la cible est toujours en bas à droite, cela changera bientôt...
 
-    * Challenges (contenu assuré, faisant partie du projet)
-        * _spoiler_: saurez-vous sauver un de vos coéquipiers en danger (avec de la résolution de labyrinthe au passage)
+* Pour l'instant, dès qu'un joueur est inscrit il participe à la partie. A terme, il faudra attendre l'inscription
+  complète de l'équipe pour que le jeu démarre.
 
-          inclus l'introduction des types `Challenge`, `ChallengeAnswer`, `ChallengeError`
+* Pour l'instant les parties sont non scorées (le serveur donne juste un log du nombre de mouvements en fin de partie).
+  Un simple log sur le serveur donne le nombre de mouvements effectués quand un joueur trouve la sortie.
 
-    * Monster is coming (contenu optionnel, _for fun_)
-        * _spoiler_: seul face à un monstre, vous perdrez; unis vous gagnerez
+* Le challenge SOS est en approche (même s'il est déjà décrit ci-dessous)
 
-          (inclus une modification du type `Action`)
+* Monster is coming (contenu optionnel, _for fun_)
+    * _spoiler_: seul face à un monstre, vous perdrez; unis vous gagnerez
 
-    * Team fight (contenu optionnel, _for fun_)
-        * _spoiler_: seuls les membres d’une même équipe peuvent être sur une même case...
+      (inclus une modification du type `Action`)
 
-          (inclus une modification du type `Action`)
+* Team fight (contenu optionnel, _for fun_)
+    * _spoiler_: seuls les membres d’une même équipe peuvent être sur une même case...
+
+      (inclus une modification du type `Action`)
+
+* Bonus si j'ai le temps (aucun travail requis pour vous):
+    * un mode _replay_ pour revoir une partie
 
 ## Déroulement du jeu en mode solo ou team
 
 ### Préparation
 
-1. Le serveur démarre en attente d'équipes pour jouer
+1. Le serveur démarre en attente d'équipes pour jouer.
 2. Chaque équipe se connecte au serveur et s'enregistre avec un nom unique.
 3. Le serveur vous renvoie le nombre de joueurs à fournir pour chaque équipe
-   et un code d'accès avec lequel les joueurs pourront s'inscrire.
+   et un code d'accès pour l'équipe avec lequel les joueurs pourront s'inscrire.
 4. Les membres se connectent avant le timeout avec le code d'accès de l'équipe
 
 ### L'évasion
 
-Quand une partie commence, les joueurs sont propulsés dans le labyrinthe sans information sur leurs positions.
+Quand une partie commence, les joueurs sont propulsés dans le labyrinthe sans information sur leurs positions absolues.
 
-5. Le serveur envoie la vue (cf [RadarView](./encodings/RadarView.md)) autour du joueur avec une information sur
-   les cases autour de lui, les cases libres, les murs et les éventuels autres items du jeu.
-6. Le serveur peut parfois envoyer des indices de type "boussole" (absolue ou relative) indiquant la direction de la
-   sortie. Celle-ci est exprimé en degrées.
+5. Le serveur peut parfois envoyer des indices de type "boussole" indiquant la direction de la sortie.
+   Celle-ci est exprimé en degrées par rapport à votre direction "tout droit".
 
    Quand elle est relative, c'est par rapport à votre déplacement. 0 degrée, signifiant ainsi " tout droit" et 90 degrée
    signifiant à droite.
@@ -70,6 +73,19 @@ Quand une partie commence, les joueurs sont propulsés dans le labyrinthe sans i
 
    Le serveur peut aussi vous envoyer en indice la dimension de la grille du labyrinthe (en nombre de cellules en
    largeur et hauteur).
+
+   Il existe aussi un indice qui cache un secret. Garder le bien au chaud, il vous servira lors du challenge
+   SecretSumModulo.
+
+6. Le cas nominal est que le serveur envoie la vue (cf [RadarView](./encodings/RadarView.md)) autour du joueur avec une
+   information sur les cases autour de lui, les cases libres, les murs et les éventuels autres items du jeu.
+
+   Cependant, de temps en temps, il peut vous un challenge. Il y a deux types de challenges:
+    * `SecretSumModulo` où l'objectif pour le joueur est de calculer la somme des _secrets_ qui ont été envoyés aux
+      membres de son équipe, le tout modulo un nombre qui vous est envoyé au moment du challenge.
+    * `SOS` où l'objectif sera que l'un des équipiers du joueur vienne le secourir. Attention, il ne faut surtout pas
+      que le joueur bouge ou sinon, il périra dans d'atroces souffrances. Pendant que ce challenge est en cours, le
+      joueur reçoit des indices qu'il peut transmettre à ces équipiers pour le retrouver.
 
 7. Chaque joueur formule l'action qu'il souhaite effectuer. Le plus simple est un déplacement vers une case libre.
 8. La cible est identifiée sur le [RadarView](./encodings/RadarView.md) et dès lors que le joueur est dessus, le serveur
@@ -226,19 +242,17 @@ Tous les messages sont de la forme:
 Tous ces messages sont transmis sous la forme d'une
 sérialisation [JSON](https://fr.wikipedia.org/wiki/JavaScript_Object_Notation).
 
-| Nom du message          | Champs du message                                                                          | Exemple                                                                                                                             | Commentaires                              |
-|-------------------------|--------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
-| `RegisterTeam`          | `name: String`                                                                             | `{"RegisterTeam":{"name":"curious_broccoli"}}`                                                                                      |                                           | 
-| `RegisterTeamResult`    | `enum { Ok { expected_players: u8, registration_token: String }, Err(RegistrationError) }` | `{"RegisterTeamResult":{"Ok":{"expected_players":3,"registration_token":"SECRET"}}}`<br>`{"SubscribeResult":{"Err":"InvalidName"}}` |                                           | 
-| `SubscribePlayer`       | `name: String, registration_token: String`                                                 | `{"SubscribePlayer":{"name":"flower_power","registration_token":"SECRET"}}`                                                         |                                           | 
-| `SubscribePlayerResult` | `enum { Ok, Err(RegistrationError) }`                                                      | `{"SubscribePlayerResult":{"Err":"InvalidName"}}`                                                                                   |                                           | 
-| `RadarView`             | `Sring`                                                                                    | `{"RadarView":"sgvSBg8SifDVCMXKiq"}`                                                                                                | Le radar est fourni dans un format encodé |
-| `Hint`                  | `enum { RelativeCompass { angle: f32 }, GridSize { columns: u32, rows: u32 }, ... }`       | `{"Hint":{"RelativeCompass":{"angle":12.0}}}`                                                                                       | D'autres indices sont à venir             |
-| `Action`                | `enum { MoveTo(RelativeDirection) }`                                                       | `{"Action":{"MoveTo":"Right"}}`                                                                                                     | D'autres actions sont à venir             | 
-| `ActionError`           | `enum { CannotPassThroughWall, ... }`                                                      | `{"ActionError":"CannotPassThroughWall"}`                                                                                           | D'autres erreurs sont à venir             | 
-| `Challenge`             |                                                                                            |                                                                                                                                     | Encore à définir                          |
-| `ChallengeAnswer`       |                                                                                            |                                                                                                                                     | Encore à définir                          |
-| `ChallengeResult`       |                                                                                            |                                                                                                                                     | Encore à définir                          |
+| Nom du message          | Champs du message                                                                                       | Exemple                                                                                                                             | Commentaires                              |
+|-------------------------|---------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------|
+| `RegisterTeam`          | `name: String`                                                                                          | `{"RegisterTeam":{"name":"curious_broccoli"}}`                                                                                      |                                           | 
+| `RegisterTeamResult`    | `enum { Ok { expected_players: u8, registration_token: String }, Err(RegistrationError) }`              | `{"RegisterTeamResult":{"Ok":{"expected_players":3,"registration_token":"SECRET"}}}`<br>`{"SubscribeResult":{"Err":"InvalidName"}}` |                                           | 
+| `SubscribePlayer`       | `name: String, registration_token: String`                                                              | `{"SubscribePlayer":{"name":"flower_power","registration_token":"SECRET"}}`                                                         |                                           | 
+| `SubscribePlayerResult` | `enum { Ok, Err(RegistrationError) }`                                                                   | `{"SubscribePlayerResult":{"Err":"InvalidName"}}`                                                                                   |                                           | 
+| `RadarView`             | `Sring`                                                                                                 | `{"RadarView":"sgvSBg8SifDVCMXKiq"}`                                                                                                | Le radar est fourni dans un format encodé |
+| `Hint`                  | `enum { RelativeCompass { angle: f32 }, GridSize { columns: u32, rows: u32 }, Secret(u64), SOSHelper }` | `{"Hint":{"RelativeCompass":{"angle":12.0}}}`                                                                                       |                                           |
+| `Action`                | `enum { MoveTo(RelativeDirection), SolveChallenge { answer: String } }`                                 | `{"Action":{"MoveTo":"Right"}}`                                                                                                     |                                           | 
+| `ActionError`           | `enum { CannotPassThroughWall, NoRunningChallenge, SolveChallengeFirst, InvalidChallengeSolution }`     | `{"ActionError":"CannotPassThroughWall"}`                                                                                           | D'autres erreurs sont à venir pour le SOS | 
+| `Challenge`             | `enum { SecretSumModulo(u64), SOS }`                                                                    | `{"Challenge":{"SecretSumModulo":42}}`                                                                                              |                                           |
 
 ### Séquencement des messages
 
@@ -246,10 +260,11 @@ sérialisation [JSON](https://fr.wikipedia.org/wiki/JavaScript_Object_Notation).
 
 ### Les types complémentaires
 
-| Nom du type         | Description du type                                                                 | Commentaires |
-|---------------------|-------------------------------------------------------------------------------------|--------------|
-| `RegistrationError` | `enum { AlreadyRegistered, InvalidName, InvalidRegistrationToken, TooManyPlayers }` |              |
-| `RelativeDirection` | `enum { Front, Right, Back, Left }`                                                 |              |
+| Nom du type         | Description du type                                                                 | Commentaires       |
+|---------------------|-------------------------------------------------------------------------------------|--------------------|
+| `RegistrationError` | `enum { AlreadyRegistered, InvalidName, InvalidRegistrationToken, TooManyPlayers }` |                    |
+| `RelativeDirection` | `enum { Front, Right, Back, Left }`                                                 |                    |
+| `SOSHelper`         |                                                                                     | détails à préciser |
 
 ## Notions abordées
 

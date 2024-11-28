@@ -144,15 +144,15 @@ Les éléments de cellules sont encodés comme décrits [précédemment](#les-it
   puis `python3 -c "print(' '.join([format(b,['08b','02X'][i>=6])for(i,b)in enumerate(open('binfile','rb').read())]))"`
 
 * Ce qui donne les 3 blocs:
-    * Passage horizontaux: `00100000 01000110 00010010`
+    * Passages horizontaux: `00100000 01000110 00010010`
 
-      => `00010010 01000110 00100000` (inversion des octets car écrit en little endian)
+      => `00010010 01000110 00100000` (inversion des octets, car écrit en little endian)
 
       => `000100 100100 011000 100000` (4 lignes de 3 passages)
 
-    * Passage verticaux: `10000000 10011000 00101000`
+    * Passages verticaux: `10000000 10011000 00101000`
 
-      => `00101000 10011000 10000000` (inversion des octets car écrit en little endian)
+      => `00101000 10011000 10000000` (inversion des octets, car écrit en little endian)
 
       => `00101000 10011000 10000000` (3 lignes de 4 passages)
 
@@ -160,12 +160,12 @@ Les éléments de cellules sont encodés comme décrits [précédemment](#les-it
       (le `0` final étant du padding)
 
 * On peut alors lire
-    * Passage horizontaux (en regroupant par 2 bits consécutifs):
+    * Passages horizontaux (en regroupant par 2 bits consécutifs):
         * Undefined, Open, Undefined (ligne 1),
         * Wall, Open, Undefined (ligne 2),
         * Open, Wall, Undefined (ligne 3),
         * Wall, Undefined, Undefined (ligne 4).
-    * Passage verticaux (en regroupant par 2 bits consécutifs):
+    * Passages verticaux (en regroupant par 2 bits consécutifs):
         * Undefined, Wall, Wall, Undefined (ligne 1)
         * Wall, Open, Wall, Undefined (ligne 2),
         * Wall, Undefined, Undefined, Undefined (ligne 3).
