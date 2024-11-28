@@ -90,7 +90,9 @@ fn register_team(team_name: &str, server_address_with_port: &str) {
         ServerPayload::RegisterTeamResult(Err(registration_error)) => {
             match registration_error {
                 RegistrationError::AlreadyRegistered => println!("Team already registered"),
-                RegistrationError::InvalidName => println!("Invalid name for team.")
+                RegistrationError::InvalidName => println!("Invalid name for team."),
+                RegistrationError::InvalidRegistrationToken => println!("Invalid registration token."),
+                RegistrationError::TooManyPlayers => println!("Too many players.")
             }
         }
         _ => println!("Response not handled yet.")
@@ -118,8 +120,10 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
         }
         ServerPayload::SubscribePlayerResult(SubscribePlayerResult::Err(registration_error)) => {
             match registration_error {
-                RegistrationError::AlreadyRegistered => println!("Player already registered"),
-                RegistrationError::InvalidName => println!("Invalid name for player.")
+                RegistrationError::AlreadyRegistered => println!("Team already registered"),
+                RegistrationError::InvalidName => println!("Invalid name for team."),
+                RegistrationError::InvalidRegistrationToken => println!("Invalid registration token."),
+                RegistrationError::TooManyPlayers => println!("Too many players.")
             }
         }
         _ => println!("Response not handled yet.")

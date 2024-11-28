@@ -47,7 +47,9 @@ pub struct RegisterTeamOk {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum RegistrationError {
     AlreadyRegistered,
-    InvalidName
+    InvalidName,
+    InvalidRegistrationToken, 
+    TooManyPlayers
 }
 
 
