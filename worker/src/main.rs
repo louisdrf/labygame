@@ -1,7 +1,7 @@
 use std::env;
 use std::net::TcpStream;
 use common::client_args::{ CommandArgument, CommandArgumentsList };
-use common::payloads::{ Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
+use common::payloads::{ Direction, Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
 
 mod payloads_utils;
 
@@ -136,6 +136,23 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
         }
         _ => println!("Response not handled yet.")
     }
+
+    //move_player(&mut stream, Direction::Left);
 }
 
 
+fn move_player(stream: &mut TcpStream, direction: Direction) {
+    let move_player_payload = Payload::move_to(direction);
+
+    payloads_utils::send_payload_to_server(stream, &move_player_payload);
+
+    match payloads_utils::receive_payload_from_server(stream) {
+        ServerPayload::ActionError(action_error) => match action_error {
+            common::payloads::ActionError::CannotPassThroughWall => println!("CannotPassThroughWall"),
+            common::payloads::ActionError::NoRunningChallenge => println!("NoRunningChallenge"),
+            common::payloads::ActionError::SolveChallengeFirst => println!("SolveChallengeFirst"),
+            common::payloads::ActionError::InvalidChallengeSolution => println!("InvalidChallengeSolution"),
+        }
+        _ => println!("Response not handled yet.")
+    }
+}
