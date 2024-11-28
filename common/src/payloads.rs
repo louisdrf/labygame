@@ -24,7 +24,8 @@ pub enum Action {
 pub enum ServerPayload {
     RegisterTeamResult(Result<RegisterTeamOk, RegistrationError>),
     SubscribePlayerResult(SubscribePlayerResult),
-    ActionResult(Result<(), ActionError>)
+    ActionResult(Result<(), ActionError>),
+    RadarView(String)
 }
 
 
