@@ -2,7 +2,7 @@ use std::env;
 use std::net::TcpStream;
 use std::io::{Write, Read};
 use common::client_args::{ CommandArgument, CommandArgumentsList };
-use common::payloads::{ Payload, RegistrationError, ServerPayload };
+use common::payloads::{ Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
 
 /**
  * param @arg command argument as "--arg_name=value"
@@ -79,6 +79,8 @@ fn register_team(team_name: &str, server_address_with_port: &str) {
             println!("Inscription réussie !");
             println!("Nombre de joueurs attendus : {}", register_team_response.expected_players);
             println!("Token d'inscription : {}", register_team_response.registration_token);
+
+            //subscribe(server_address_with_port, "player1", &register_team_response.registration_token);
         }
         ServerPayload::RegisterTeamResult(Err(registration_error)) => {
             match registration_error {
@@ -100,6 +102,28 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
     };
     
     send_payload_to_server(&mut stream, &subscribe_player_payload);
+
+    // receive  player subscription confirmation
+    match receive_payload_from_server(&mut stream) {
+        ServerPayload::SubscribePlayerResult(SubscribePlayerResult::Ok) => {
+            println!("Player subscribtion succeed !");
+        }
+        ServerPayload::SubscribePlayerResult(SubscribePlayerResult::Err(registration_error)) => {
+            match registration_error {
+                RegistrationError::AlreadyRegistered => println!("Player already registered"),
+                RegistrationError::InvalidName => println!("Invalid name for player.")
+            }
+        }
+        _ => println!("Response not handled yet.")
+    }
+
+    // receive radar view
+    match receive_payload_from_server(&mut stream) {
+        ServerPayload::RadarView(radar_view) => {
+            println!("Received radar view : {}", radar_view);
+        }
+        _ => println!("Response not handled yet.")
+    }
 }
 
 fn to_tcp_payload(payload: &Payload) -> Vec<u8> {
