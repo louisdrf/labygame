@@ -1,9 +1,8 @@
 use std::env;
 use std::net::TcpStream;
 use std::io::{Write, Read};
-use common::{
-    CommandArgument, CommandArgumentsList, Payload, RegistrationError, ServerPayload};
-
+use common::client_args::{ CommandArgument, CommandArgumentsList };
+use common::payloads::{ Payload, RegistrationError, ServerPayload };
 
 /**
  * param @arg command argument as "--arg_name=value"
