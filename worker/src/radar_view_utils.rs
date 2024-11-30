@@ -12,8 +12,6 @@ fn base64_char_to_decimal(c: char) -> Result<u8, String> {
 
 
 pub fn decode(encoded_radar_view: &str) -> i32 {
-    let mut result: Vec<u8> = Vec::new();
-
     let mut binary: String = String::new(); 
 
     for c in encoded_radar_view.chars() {
@@ -33,9 +31,9 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
         binary_reversed.insert_str(0, &part);
     }
 
-    println!("{}",binary_reversed);
+    println!("{}", binary_reversed);
 
-    result.len() as i32
+    binary_reversed.len() as i32
 }
 
 
@@ -45,7 +43,7 @@ mod tests {
 
       #[test]
     fn test_decode() {
-        assert_eq!(decode("ieys"), 30);
+        assert_eq!(decode("ieys"), 24);
     }
 
 
