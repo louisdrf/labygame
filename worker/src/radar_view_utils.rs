@@ -88,6 +88,28 @@ fn get_decoded_walls_binary_string(encoded_walls_bs: &str) -> String {
      decoded_walls_bs
 }
 
+/**
+ * @param : 24 bits string representation of the horizontal/vertical walls
+ * @returns a Vec<String> containg each of the wall cells
+ */
+fn get_walls_cells(decoded_walls_bs: &str) -> Vec<String> {
+    let mut wall_cells: Vec<String> = Vec::new();
+
+    let wall_cell_byte_size = 2;
+    let number_of_cells = 12;
+
+    for byte_index in 0..number_of_cells {
+        let byte_start_index = byte_index * wall_cell_byte_size;
+        let byte_end_index = (byte_index + 1) * wall_cell_byte_size;
+
+        let wall_cell = &decoded_walls_bs[byte_start_index..byte_end_index];
+
+        wall_cells.push(wall_cell.to_string());
+    }
+
+    wall_cells
+}
+
 
 
 #[cfg(test)]
