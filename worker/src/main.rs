@@ -4,6 +4,7 @@ use common::client_args::{ CommandArgument, CommandArgumentsList };
 use common::payloads::{ Direction, Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
 
 mod payloads_utils;
+mod radar_view_utils;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -138,6 +139,7 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
     }
 
     //move_player(&mut stream, Direction::Left);
+    
 }
 
 

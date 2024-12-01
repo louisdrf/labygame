@@ -13,17 +13,22 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
     let mut binary_encoded_radar_view: String = String::new(); 
 
     for encoded_char in encoded_radar_view.chars() {
-        let encoded_char_as_base64 = base64_char_to_decimal(encoded_char).unwrap();
-        let six_bits_binary_letter = format!("{:06b}", encoded_char_as_base64);
+        let encoded_char_decimal_value = base64_char_to_decimal(encoded_char).unwrap();
+        let six_bits_binary_letter = format!("{:06b}", encoded_char_decimal_value);
         binary_encoded_radar_view.push_str(&six_bits_binary_letter);
     }
 
-    let horizontal_walls_reversed = parse_horizontal_walls_part(&binary_encoded_radar_view);
-    println!("horizontal walls : {} - 4 * 6 bits", horizontal_walls_reversed);
+    // parsing horizontal walls bits
+    let binary_encoded_radar_view_horizontal_walls_part = &binary_encoded_radar_view[0..24]; 
 
+    let horizontal_walls_binary_string = get_decoded_walls_binary_string(&binary_encoded_radar_view_horizontal_walls_part);
+    println!("horizontal walls : {} - 4 * 6 bits", horizontal_walls_binary_string);
 
-    let vertical_walls_reversed = parse_vertical_walls_part(&binary_encoded_radar_view);
-    println!("vertical walls : {} - 3 * 8 bits", vertical_walls_reversed);
+    // parsing vertical walls bits
+    let binary_encoded_radar_view_vertical_walls_part = &binary_encoded_radar_view[24..48]; 
+
+    let vertical_walls_binary_string = get_decoded_walls_binary_string(&binary_encoded_radar_view_vertical_walls_part);
+    println!("vertical walls : {} - 3 * 8 bits", vertical_walls_binary_string);
 
 
     // CELLS -> last 40 bits by 8 bits paquets
@@ -52,35 +57,35 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
         }
     }
 
-    horizontal_walls_reversed.len() as i32
+    50
 }
 
 
 /**
- * return the firsts 4 paquets of 6 bits of the binary string
+ * @param: the 24 bits representing the horizontal/vertical walls in the radar view
+ * 
+ * split each of the rows/columns, represented by each 8 bits paquets of the @param
+ * build a string with each of these paquets in the reversed order because of the little endian encoding
+ * 
+ * @returns the 24 bits representing each of the walls representing the rows/columns in the radar view
  */
-fn parse_horizontal_walls_part(binary_string: &str) -> String {
-    // HORIZONTAL WALLS -> 24 first bits by 6 bits paquets
-    let mut horizontal_walls_reversed: String = String::new(); 
-    for i in 0..4 {
-        let part = &binary_string[i*6..(i+1) * 6];
-        horizontal_walls_reversed.insert_str(0, &part);
-    }
+fn get_decoded_walls_binary_string(encoded_walls_bs: &str) -> String {
+     // bs = BINARY_STRING
+     let mut decoded_walls_bs: String = String::new(); 
 
-    horizontal_walls_reversed
-}
-
-/**
- * return the string containing the 3 bytes representing the vertical walls from the binary string
- */
-fn parse_vertical_walls_part(binary_string: &str) -> String {
-    let mut vertical_walls_reversed: String = String::new(); 
-    for i in 3..6 {
-        let part = &binary_string[i*8..(i+1) * 8];
-        vertical_walls_reversed.insert_str(0, &part);
-    }
-
-    return vertical_walls_reversed
+     let number_of_bytes = 3;
+     let byte_size = 8;
+ 
+     for byte_index in 0..number_of_bytes {
+         let byte_start_index = byte_index * byte_size;
+         let byte_end_index = (byte_index + 1) * byte_size;
+ 
+         let walls_bs = &encoded_walls_bs[byte_start_index..byte_end_index];
+ 
+         decoded_walls_bs.insert_str(0, &walls_bs); // reverse while adding it because of the little endian encoding
+     }
+ 
+     decoded_walls_bs
 }
 
 
@@ -93,25 +98,5 @@ mod tests {
     fn test_decode() {
         assert_eq!(decode("ieysGjGO8papd/a"), 172);
     }
-
-
-  /*    #[test]
-    fn test_A_base_64_format() {
-        assert_eq!(base64_char_to_decimal('A').unwrap(), 26);
-    } 
-
-    #[test]
-    fn test_e_base_64_format() {
-        assert_eq!(base64_char_to_decimal('e').unwrap(), 4);
-    } 
-
-    #[test]
-    fn test_0_base_64_format() {
-        assert_eq!(base64_char_to_decimal('0').unwrap(), 52);
-    } 
-
-    */
-
-
-
 }
+
