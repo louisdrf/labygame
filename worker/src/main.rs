@@ -5,6 +5,7 @@ use common::payloads::{ Direction, Payload, RegistrationError, ServerPayload, Su
 
 mod payloads_utils;
 mod radar_view_utils;
+mod binary_text;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
