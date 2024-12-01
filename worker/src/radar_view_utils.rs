@@ -30,22 +30,20 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
     let vertical_walls_binary_string = get_decoded_walls_binary_string(&binary_encoded_radar_view_vertical_walls_part);
     println!("vertical walls : {} - 3 * 8 bits", vertical_walls_binary_string);
 
-
-    // CELLS -> last 40 bits by 8 bits paquets
-    let mut cells: String = String::new(); 
-    for i in 6..11 {
-        let part = &binary_encoded_radar_view[i*8..(i+1) * 8];
-        cells.push_str(part);
-    }
-
-    println!("cells : {} - 5 * 8 bits", cells);
+    let binary_encoded_radar_view_cells_part = &binary_encoded_radar_view[48..88]; 
 
 
-    // couper en 4 * 9 bits
+    let cells = get_cells(binary_encoded_radar_view_cells_part);
+
+    display_cells(cells);
+
+    50
+}
+
+fn display_cells(cells: Vec<String>) {
     let mut counter = 0;
 
-    for i in 0..9 {
-        let cell = &cells[i*4..(i+1) * 4];
+    for cell in cells {
         if cell == "1111" { print!(" Undefined ") }
         if cell == "0000" { print!(" Rien ") }
 
@@ -56,36 +54,26 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
             counter = 0;
         }
     }
-
-    50
 }
 
-
 /**
- * @param: the 24 bits representing the horizontal/vertical walls in the radar view
- * 
- * split each of the rows/columns, represented by each 8 bits paquets of the @param
- * build a string with each of these paquets in the reversed order because of the little endian encoding
- * 
- * @returns the 24 bits representing each of the walls representing the rows/columns in the radar view
+ * @param : 40 bits string representation of the cells
+ * @returns a Vec<String> containg each cells
  */
-fn get_decoded_walls_binary_string(encoded_walls_bs: &str) -> String {
-     // bs = BINARY_STRING
-     let mut decoded_walls_bs: String = String::new(); 
+fn get_cells(binary_encoded_radar_view_cells_bytes: &str) -> Vec<String> {
+    let mut cells: Vec<String> = Vec::new();
+    let number_of_cells_bytes = 9;
+    let cell_byte_size = 4;
 
-     let number_of_bytes = 3;
-     let byte_size = 8;
- 
-     for byte_index in 0..number_of_bytes {
-         let byte_start_index = byte_index * byte_size;
-         let byte_end_index = (byte_index + 1) * byte_size;
- 
-         let walls_bs = &encoded_walls_bs[byte_start_index..byte_end_index];
- 
-         decoded_walls_bs.insert_str(0, &walls_bs); // reverse while adding it because of the little endian encoding
-     }
- 
-     decoded_walls_bs
+    for byte_index in 0..number_of_cells_bytes {
+        let byte_start_index = byte_index * cell_byte_size;
+        let byte_end_index = (byte_index + 1) * cell_byte_size;
+
+        let cell = &binary_encoded_radar_view_cells_bytes[byte_start_index..byte_end_index];
+        cells.push(cell.to_string());
+    }
+
+    cells
 }
 
 /**
@@ -108,6 +96,35 @@ fn get_walls_cells(decoded_walls_bs: &str) -> Vec<String> {
     }
 
     wall_cells
+}
+
+
+
+/**
+ * @param: the 24 bits representing the horizontal/vertical walls in the radar view
+ * 
+ * split each of the rows/columns, represented by each 8 bits paquets of the @param
+ * build a string with each of these paquets in the reversed order because of the little endian encoding
+ * 
+ * @returns the 24 bits representing each of the walls representing the rows/columns in the radar view
+ */
+fn get_decoded_walls_binary_string(encoded_walls_bs: &str) -> String {
+    // bs = BINARY_STRING
+    let mut decoded_walls_bs: String = String::new(); 
+
+    let number_of_bytes = 3;
+    let byte_size = 8;
+
+    for byte_index in 0..number_of_bytes {
+        let byte_start_index = byte_index * byte_size;
+        let byte_end_index = (byte_index + 1) * byte_size;
+
+        let walls_bs = &encoded_walls_bs[byte_start_index..byte_end_index];
+
+        decoded_walls_bs.insert_str(0, &walls_bs); // reverse while adding it because of the little endian encoding
+    }
+
+    decoded_walls_bs
 }
 
 
