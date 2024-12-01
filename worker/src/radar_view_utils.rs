@@ -18,10 +18,8 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
         binary_encoded_radar_view.push_str(&six_bits_binary_letter);
     }
 
-    let horizontal_walls_part_length = 24;
-    let vertical_walls_part_length = 24;
-
     // parsing horizontal walls bits
+    let horizontal_walls_part_length = 24;
     let horizontal_walls_part = binary_encoded_radar_view
                                         .drain(..horizontal_walls_part_length)
                                         .collect::<String>();
@@ -29,6 +27,7 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
     println!("horizontal walls : {} - 4 * 6 bits", horizontal_walls_binary_string);
 
     // parsing vertical walls bits
+    let vertical_walls_part_length = 24;
     let vertical_walls_part = binary_encoded_radar_view
                                       .drain(..vertical_walls_part_length)
                                       .collect::<String>();
@@ -36,7 +35,9 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
     println!("vertical walls : {} - 3 * 8 bits", vertical_walls_binary_string);
 
     // parsing cells
-    let cells_part = binary_encoded_radar_view.drain(..).collect::<String>();
+    let cells_part = binary_encoded_radar_view
+                            .drain(..)
+                            .collect::<String>();
     let cells = get_cells(&cells_part);
     display_cells(cells);
 
