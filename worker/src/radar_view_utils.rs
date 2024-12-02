@@ -1,16 +1,3 @@
-use crate::radar_view_utils;
-
-fn base64_char_to_base10_char(c: char) -> Result<u8, String> {
-    match c {
-        'a'..='z' => Ok((c as u8) - 97),
-        'A'..='Z' => Ok((c as u8) - 39),
-        '0'..='9' => Ok((c as u8) + 4),
-        '+' => Ok(62),
-        '/' => Ok(63),
-        _ => Err(format!("Caractère invalide : {}", c)),
-    }
-}
-
 pub fn decode(encoded_radar_view: &str) -> i32 {
     let mut binary_encoded_radar_view: String = String::new(); 
 
@@ -31,11 +18,6 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
     let cells_part = binary_encoded_radar_view.drain(..).collect::<String>();
     let cells = parse_cells_part(&cells_part);
 
-    println!("horizontal walls : {} - 4 * 6 bits", horizontal_walls_part);
-    println!("vertical walls : {} - 3 * 8 bits", vertical_walls_part);
-    //display_cells(cells);
-
-
     let radar_view: Vec<Vec<String>> = vec![vec![String::new(); 7]; 7];
     let radar_view = fill_radar_view_with_horizontal_walls(&radar_view, &horizontal_walls_cells);
     let radar_view = fill_radar_view_with_vertical_walls(&radar_view, &vertical_walls_cells);
@@ -46,6 +28,17 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
     }
 
     50
+}
+
+fn base64_char_to_base10_char(c: char) -> Result<u8, String> {
+    match c {
+        'a'..='z' => Ok((c as u8) - 97),
+        'A'..='Z' => Ok((c as u8) - 39),
+        '0'..='9' => Ok((c as u8) + 4),
+        '+' => Ok(62),
+        '/' => Ok(63),
+        _ => Err(format!("Caractère invalide : {}", c)),
+    }
 }
 
 fn fill_radar_view_with_horizontal_walls(radar_view: &Vec<Vec<String>>, horizontal_walls_cells: &Vec<String>) -> Vec<Vec<String>> {
@@ -88,22 +81,6 @@ fn fill_radar_view_with_cells(radar_view: &Vec<Vec<String>>, cells: &Vec<String>
     }
 
     radar_view
-}
-
-fn display_cells(cells: Vec<String>) {
-    let mut counter = 0;
-
-    for cell in cells {
-        if cell == "1111" { print!(" Undefined ") }
-        if cell == "0000" { print!(" Rien ") }
-
-        counter += 1;
-
-        if counter == 3 {
-            println!();
-            counter = 0;
-        }
-    }
 }
 
 /**
