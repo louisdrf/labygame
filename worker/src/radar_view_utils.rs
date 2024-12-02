@@ -1,3 +1,5 @@
+use crate::radar_view_utils;
+
 fn base64_char_to_base10_char(c: char) -> Result<u8, String> {
     match c {
         'a'..='z' => Ok((c as u8) - 97),
@@ -20,18 +22,72 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
 
     let horizontal_walls_part = binary_encoded_radar_view.drain(..24).collect::<String>();
     let horizontal_walls_part = reverse_bytes(&horizontal_walls_part);
+    let horizontal_walls_cells = split_walls_in_cells(&horizontal_walls_part);
 
     let vertical_walls_part = binary_encoded_radar_view.drain(..24).collect::<String>();
     let vertical_walls_part = reverse_bytes(&vertical_walls_part);
+    let vertical_walls_cells = split_walls_in_cells(&vertical_walls_part);
 
     let cells_part = binary_encoded_radar_view.drain(..).collect::<String>();
     let cells = parse_cells_part(&cells_part);
 
     println!("horizontal walls : {} - 4 * 6 bits", horizontal_walls_part);
     println!("vertical walls : {} - 3 * 8 bits", vertical_walls_part);
-    display_cells(cells);
+    //display_cells(cells);
+
+
+    let radar_view: Vec<Vec<String>> = vec![vec![String::new(); 7]; 7];
+    let radar_view = fill_radar_view_with_horizontal_walls(&radar_view, &horizontal_walls_cells);
+    let radar_view = fill_radar_view_with_vertical_walls(&radar_view, &vertical_walls_cells);
+    let radar_view = fill_radar_view_with_cells(&radar_view, &cells);
+
+    for row in &radar_view {
+        println!("{:?}", row);
+    }
 
     50
+}
+
+fn fill_radar_view_with_horizontal_walls(radar_view: &Vec<Vec<String>>, horizontal_walls_cells: &Vec<String>) -> Vec<Vec<String>> {
+    let mut radar_view = radar_view.clone();
+    let mut offset = 0;
+
+    for i in (0..radar_view.len()).step_by(2) {
+        radar_view[i][1] = horizontal_walls_cells[offset].clone();
+        radar_view[i][3] = horizontal_walls_cells[offset + 1].clone();
+        radar_view[i][5] = horizontal_walls_cells[offset + 2].clone();
+        offset += 3;
+    }
+
+    radar_view
+}
+
+fn fill_radar_view_with_vertical_walls(radar_view: &Vec<Vec<String>>, vertical_walls_cells: &Vec<String>) -> Vec<Vec<String>> {
+    let mut radar_view = radar_view.clone();
+    let mut offset = 0;
+
+    for i in (0..radar_view.len()).step_by(2) {
+        radar_view[1][i] = vertical_walls_cells[offset].clone();
+        radar_view[3][i] = vertical_walls_cells[offset + 1].clone();
+        radar_view[5][i] = vertical_walls_cells[offset + 2].clone();
+        offset += 3;
+    }
+
+    radar_view
+}
+
+fn fill_radar_view_with_cells(radar_view: &Vec<Vec<String>>, cells: &Vec<String>) -> Vec<Vec<String>> {
+    let mut radar_view = radar_view.clone();
+    let mut offset = 0;
+
+    for i in (1..radar_view.len()).step_by(2) {
+        radar_view[1][i] = cells[offset].clone();
+        radar_view[3][i] = cells[offset + 1].clone();
+        radar_view[5][i] = cells[offset + 2].clone();
+        offset += 3;
+    }
+
+    radar_view
 }
 
 fn display_cells(cells: Vec<String>) {
@@ -82,15 +138,7 @@ fn split_walls_in_cells(walls_part: &str) -> Vec<String> {
 
 
 /**
- * @param: the 24 bits representing the horizontal/vertical walls in the radar view
- * 
- * split each of the rows/columns, represented by each 8 bits paquets of the @param
- * build a string with each of these paquets in the reversed order because of the little endian encoding
- * 
- * @returns the 24 bits representing each of the horizontal/vertical walls (2 bytes paquets) around the player
- * 
- * example : 11111111-00001111-00000000 : @param (without the '-')
- * ->  00000000-00001111-11111111: : @returns (without the '-')
+ * reverse bytes of a 24 bits binary string
  */
 fn reverse_bytes(binary_string: &str) -> String {
     let mut reversed_binary_string: String = String::new(); 
