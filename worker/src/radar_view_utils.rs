@@ -1,4 +1,4 @@
-fn base64_char_to_decimal(c: char) -> Result<u8, String> {
+fn base64_char_to_base10_char(c: char) -> Result<u8, String> {
     match c {
         'a'..='z' => Ok((c as u8) - 97),
         'A'..='Z' => Ok((c as u8) - 39),
@@ -12,33 +12,23 @@ fn base64_char_to_decimal(c: char) -> Result<u8, String> {
 pub fn decode(encoded_radar_view: &str) -> i32 {
     let mut binary_encoded_radar_view: String = String::new(); 
 
-    for encoded_char in encoded_radar_view.chars() {
-        let encoded_char_decimal_value = base64_char_to_decimal(encoded_char).unwrap();
-        let six_bits_binary_letter = format!("{:06b}", encoded_char_decimal_value);
+    for base64_character in encoded_radar_view.chars() {
+        let char_base10_value = base64_char_to_base10_char(base64_character).unwrap();
+        let six_bits_binary_letter = format!("{:06b}", char_base10_value);
         binary_encoded_radar_view.push_str(&six_bits_binary_letter);
     }
 
-    // parsing horizontal walls bits
-    let horizontal_walls_part_length = 24;
-    let horizontal_walls_part = binary_encoded_radar_view
-                                        .drain(..horizontal_walls_part_length)
-                                        .collect::<String>();
-    let horizontal_walls_binary_string = get_decoded_walls_binary_string(&horizontal_walls_part);
-    println!("horizontal walls : {} - 4 * 6 bits", horizontal_walls_binary_string);
+    let horizontal_walls_part = binary_encoded_radar_view.drain(..24).collect::<String>();
+    let horizontal_walls_part = reverse_bytes(&horizontal_walls_part);
 
-    // parsing vertical walls bits
-    let vertical_walls_part_length = 24;
-    let vertical_walls_part = binary_encoded_radar_view
-                                      .drain(..vertical_walls_part_length)
-                                      .collect::<String>();
-    let vertical_walls_binary_string = get_decoded_walls_binary_string(&vertical_walls_part);
-    println!("vertical walls : {} - 3 * 8 bits", vertical_walls_binary_string);
+    let vertical_walls_part = binary_encoded_radar_view.drain(..24).collect::<String>();
+    let vertical_walls_part = reverse_bytes(&vertical_walls_part);
 
-    // parsing cells
-    let cells_part = binary_encoded_radar_view
-                            .drain(..)
-                            .collect::<String>();
-    let cells = parse_cells(&cells_part);
+    let cells_part = binary_encoded_radar_view.drain(..).collect::<String>();
+    let cells = parse_cells_part(&cells_part);
+
+    println!("horizontal walls : {} - 4 * 6 bits", horizontal_walls_part);
+    println!("vertical walls : {} - 3 * 8 bits", vertical_walls_part);
     display_cells(cells);
 
     50
@@ -64,16 +54,11 @@ fn display_cells(cells: Vec<String>) {
  * @param : 40 bits string representation of the cells
  * @returns a Vec<String> containg each cells
  */
-fn parse_cells(binary_encoded_radar_view_cells_bytes: &str) -> Vec<String> {
+fn parse_cells_part(cells_part: &str) -> Vec<String> {
     let mut cells: Vec<String> = Vec::new();
-    let number_of_cells_bytes = 9;
-    let cell_byte_size = 4;
 
-    for byte_index in 0..number_of_cells_bytes {
-        let byte_start_index = byte_index * cell_byte_size;
-        let byte_end_index = (byte_index + 1) * cell_byte_size;
-
-        let cell = &binary_encoded_radar_view_cells_bytes[byte_start_index..byte_end_index];
+    for i in 0..9 {
+        let cell = &cells_part[i * 4..(i + 1) * 4];
         cells.push(cell.to_string());
     }
 
@@ -114,23 +99,15 @@ fn split_walls_in_cells(decoded_walls_bs: &str) -> Vec<String> {
  * example : 11111111-00001111-00000000 : @param (without the '-')
  * ->  00000000-00001111-11111111: : @returns (without the '-')
  */
-fn get_decoded_walls_binary_string(encoded_walls_bs: &str) -> String {
-    // bs = BINARY_STRING
-    let mut decoded_walls_bs: String = String::new(); 
+fn reverse_bytes(binary_string: &str) -> String {
+    let mut reversed_binary_string: String = String::new(); 
 
-    let number_of_bytes = 3;
-    let byte_size = 8;
-
-    for byte_index in 0..number_of_bytes {
-        let byte_start_index = byte_index * byte_size;
-        let byte_end_index = (byte_index + 1) * byte_size;
-
-        let walls_bs = &encoded_walls_bs[byte_start_index..byte_end_index];
-
-        decoded_walls_bs.insert_str(0, &walls_bs); // reverse while adding it because of the little endian encoding
+    for i in 0..3 {
+        let byte = &binary_string[i * 8..(i + 1) * 8];
+        reversed_binary_string.insert_str(0, &byte); 
     }
 
-    decoded_walls_bs
+    reversed_binary_string
 }
 
 
