@@ -38,7 +38,7 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
     let cells_part = binary_encoded_radar_view
                             .drain(..)
                             .collect::<String>();
-    let cells = get_cells(&cells_part);
+    let cells = parse_cells(&cells_part);
     display_cells(cells);
 
     50
@@ -64,7 +64,7 @@ fn display_cells(cells: Vec<String>) {
  * @param : 40 bits string representation of the cells
  * @returns a Vec<String> containg each cells
  */
-fn get_cells(binary_encoded_radar_view_cells_bytes: &str) -> Vec<String> {
+fn parse_cells(binary_encoded_radar_view_cells_bytes: &str) -> Vec<String> {
     let mut cells: Vec<String> = Vec::new();
     let number_of_cells_bytes = 9;
     let cell_byte_size = 4;
@@ -81,10 +81,10 @@ fn get_cells(binary_encoded_radar_view_cells_bytes: &str) -> Vec<String> {
 }
 
 /**
- * @param : 24 bits string representation of the horizontal/vertical walls
+ * @param : 24 bits binary string representing each of the horizontal/vertical walls (2 bytes paquets) around the player
  * @returns a Vec<String> containg each of the wall cells
  */
-fn get_walls_cells(decoded_walls_bs: &str) -> Vec<String> {
+fn split_walls_in_cells(decoded_walls_bs: &str) -> Vec<String> {
     let mut wall_cells: Vec<String> = Vec::new();
 
     let wall_cell_byte_size = 2;
