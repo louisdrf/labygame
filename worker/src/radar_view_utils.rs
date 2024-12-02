@@ -103,14 +103,16 @@ fn get_walls_cells(decoded_walls_bs: &str) -> Vec<String> {
 }
 
 
-
 /**
  * @param: the 24 bits representing the horizontal/vertical walls in the radar view
  * 
  * split each of the rows/columns, represented by each 8 bits paquets of the @param
  * build a string with each of these paquets in the reversed order because of the little endian encoding
  * 
- * @returns the 24 bits representing each of the walls representing the rows/columns in the radar view
+ * @returns the 24 bits representing each of the horizontal/vertical walls (2 bytes paquets) around the player
+ * 
+ * example : 11111111-00001111-00000000 : @param (without the '-')
+ * ->  00000000-00001111-11111111: : @returns (without the '-')
  */
 fn get_decoded_walls_binary_string(encoded_walls_bs: &str) -> String {
     // bs = BINARY_STRING
