@@ -69,18 +69,11 @@ fn parse_cells_part(cells_part: &str) -> Vec<String> {
  * @param : 24 bits binary string representing each of the horizontal/vertical walls (2 bytes paquets) around the player
  * @returns a Vec<String> containg each of the wall cells
  */
-fn split_walls_in_cells(decoded_walls_bs: &str) -> Vec<String> {
+fn split_walls_in_cells(walls_part: &str) -> Vec<String> {
     let mut wall_cells: Vec<String> = Vec::new();
 
-    let wall_cell_byte_size = 2;
-    let number_of_cells = 12;
-
-    for byte_index in 0..number_of_cells {
-        let byte_start_index = byte_index * wall_cell_byte_size;
-        let byte_end_index = (byte_index + 1) * wall_cell_byte_size;
-
-        let wall_cell = &decoded_walls_bs[byte_start_index..byte_end_index];
-
+    for i in 0..12 {
+        let wall_cell = &walls_part[i * 2..(i + 1) * 2];
         wall_cells.push(wall_cell.to_string());
     }
 
