@@ -78,11 +78,13 @@ fn fill_radar_view_with_vertical_walls(radar_view: &Vec<Vec<RadarCell>>, vertica
     let mut radar_view = radar_view.clone();
     let mut offset = 0;
 
-    for i in (0..radar_view.len()).step_by(2) {
-        radar_view[1][i] = RadarCell::from_bits(vertical_walls_cells[offset].as_str());
-        radar_view[3][i] = RadarCell::from_bits(vertical_walls_cells[offset + 1].as_str());
-        radar_view[5][i] = RadarCell::from_bits(vertical_walls_cells[offset + 2].as_str());
-        offset += 3;
+    for i in (1..radar_view.len()).step_by(2) {
+        radar_view[i][0] = RadarCell::from_bits(vertical_walls_cells[offset].as_str());
+        radar_view[i][2] = RadarCell::from_bits(vertical_walls_cells[offset + 1].as_str());
+        radar_view[i][4] = RadarCell::from_bits(vertical_walls_cells[offset + 2].as_str());
+        radar_view[i][6] = RadarCell::from_bits(vertical_walls_cells[offset + 3].as_str());
+
+        offset += 4;
     }
 
     radar_view
