@@ -15,7 +15,7 @@ Votre objectif est de sortir rapidement du labyrinthe avant que...
     * Le challenge SecretSumModulo a été ajouté. Il ne manque plus que le challenge SOS.
     * Le client doit avoir **deux** stratégies configurables dynamiquement. Vous pouvez très bien focaliser vos efforts
       sur une seule stratégie et en avoir une autre un peu _dummy_
-      (l'intérêt est de obliger à utiliser des traits dynamiques).
+      (l'intérêt est de vous _obliger_ à utiliser des traits dynamiques).
 * `Tue Nov 26 09:42:09 CET 2024`: Plus besoin de faire un fork (car cela ne serait plus possible de le rendre privé);
   vous pouvez partir d'un dépôt vierge. N'oubliez pas de m'en donner l'accès au moins en lecture (CI incluse).
 * `Sun Nov 17 23:16:30 CET 2024`: Le processus d'enregistrement des équipes et des joueurs est stabilisé.
@@ -80,9 +80,11 @@ Quand une partie commence, les joueurs sont propulsés dans le labyrinthe sans i
 6. Le cas nominal est que le serveur envoie la vue (cf [RadarView](./encodings/RadarView.md)) autour du joueur avec une
    information sur les cases autour de lui, les cases libres, les murs et les éventuels autres items du jeu.
 
-   Cependant, de temps en temps, il peut vous un challenge. Il y a deux types de challenges:
+   Cependant, de temps en temps, à la place d'un RadarView, le serveur peut vous envoyer un challenge.
+   Il y a deux types de challenges:
     * `SecretSumModulo` où l'objectif pour le joueur est de calculer la somme des _secrets_ qui ont été envoyés aux
-      membres de son équipe, le tout modulo un nombre qui vous est envoyé au moment du challenge.
+      membres de son équipe, le tout modulo un nombre qui vous est envoyé au moment du challenge (NB: si au moment du
+      challenge, un joueur n'a jamais reçu de `secret`, il faut le compter comme ayant un secret de valeur `0`).
     * `SOS` où l'objectif sera que l'un des équipiers du joueur vienne le secourir. Attention, il ne faut surtout pas
       que le joueur bouge ou sinon, il périra dans d'atroces souffrances. Pendant que ce challenge est en cours, le
       joueur reçoit des indices qu'il peut transmettre à ces équipiers pour le retrouver.
