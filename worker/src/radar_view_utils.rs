@@ -160,9 +160,31 @@ fn reverse_bytes(binary_string: &str) -> String {
 mod tests {
     use super::*;
 
-      #[test]
-    fn test_decode() {
-        assert_eq!(decode("ieysGjGO8papd/a"), 172);
+    #[test]
+    fn test_base64_char_to_base10_char() {
+        assert_eq!(base64_char_to_base10_char('A').unwrap(), 26);
+    }
+
+    #[test]
+    fn test_base64_char_to_base10_char_to_err() {
+        assert_eq!(base64_char_to_base10_char('%').unwrap_err(), "Caractère invalide : %");
+    }
+
+    #[test]
+    fn test_reverse_bytes() {
+        assert_eq!(reverse_bytes("111111110000000010101010"), "101010100000000011111111");
+    }
+
+    #[test]
+    fn test_split_walls_in_cells() {
+        assert_eq!(split_walls_in_cells("101011110000000011111111"),
+        vec!["10","10","11","11","00","00","00","00","11","11","11","11"]);
+    }
+
+    #[test]
+    fn test_parse_cells_part() {
+        assert_eq!(parse_cells_part("1010011100001111000011110000111100001111"),
+        vec!["1010","0111","0000","1111","0000","1111","0000","1111","0000"]);
     }
 }
 
