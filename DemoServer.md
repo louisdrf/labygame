@@ -71,6 +71,12 @@ Options:
 
           [default: 800,800]
 
+      --gui <GUI>
+          Visualisation mode
+
+          [default: wgpu]
+          [possible values: none, wgpu, websocket]
+          
       --maze <MAZE>
           Maze size (width,height)
 

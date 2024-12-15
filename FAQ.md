@@ -2,7 +2,7 @@
 
 ## Encodage / décodage
 
-Pour toutes les structures que vous décodez, vous devez aussi écrire l'encodeur correspondant et vérifier de 
+Pour toutes les structures que vous décodez, vous devez aussi écrire l'encodeur correspondant et vérifier de
 l'encodage/décodage ou décodage/encodage avec des tests.
 
 ## Structuration
@@ -27,7 +27,7 @@ En effet, dans le même tuyau (même stream TCP) pourra circuler une suite de di
 soit plus facile de séparer un flot d'octets en différents messages, chacun des messages est préfixé par sa taille : S1
 M1 S2 M2 S3 M3, ce qui permet à chaque fois de lire le nombre Si (entier de taille fixe) puis les Si octets devant
 ensuite être décodé en JSON.
-Cela demandera quelques primitives d'écriture/lecture sur TcpStream différentes de celles que nous avons vues 
+Cela demandera quelques primitives d'écriture/lecture sur TcpStream différentes de celles que nous avons vues
 (lire un nombre, lire un nombre d'octets définis ; idem pour l'écriture).
 
 Un *timeout* renvoyé par le serveur peut aussi être un comportement différent du même problème.
@@ -56,3 +56,20 @@ assert_eq!(
     Ok(r#""a\nb\"c""#) // raw string pas besoin de protéger les caractères; plus simple à lire
 );
 ```
+
+## Exécution sur macos
+
+Sur macOS, l'exécution du binaire fourni peut-être annulé "pour votre sécurité" (d'après macOS).
+
+Pour y remédier, vous pouvez:
+
+1. Sur votre Mac, choisissez le menu Pomme  > Réglages Système, puis cliquez sur « Confidentialité et sécurité » dans la
+   barre latérale. (Vous devrez peut-être faire défiler la page vers le bas.)
+
+2. Accédez à Sécurité, puis cliquez sur Ouvrir.
+
+3. Cliquez sur « Ouvrir quand même ».
+
+    Ce bouton s’affiche pendant environ une heure après que vous avez essayé d’ouvrir l’app.
+
+4. Saisissez votre mot de passe d’ouverture de session, puis cliquez sur OK.
