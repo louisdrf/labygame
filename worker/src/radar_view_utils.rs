@@ -1,5 +1,5 @@
-#[derive(Clone, Debug)]
-enum RadarCell {
+#[derive(Clone, Debug, PartialEq)]
+pub enum RadarCell {
         Undefined,                   // 00 
         Open,                        // 01
         Wall,                        // 10
@@ -17,7 +17,7 @@ impl RadarCell {
     }
 }
 
-pub fn decode(encoded_radar_view: &str) -> i32 {
+pub fn decode(encoded_radar_view: &str) -> Vec<Vec<RadarCell>> {
     let mut binary_encoded_radar_view: String = String::new(); 
 
     for base64_character in encoded_radar_view.chars() {
@@ -46,7 +46,7 @@ pub fn decode(encoded_radar_view: &str) -> i32 {
         println!("{:?}", row);
     }
 
-    50
+    radar_view
 }
 
 fn base64_char_to_base10_char(c: char) -> Result<u8, String> {

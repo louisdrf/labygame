@@ -1,7 +1,8 @@
 use std::env;
 use std::net::TcpStream;
 use common::client_args::{ CommandArgument, CommandArgumentsList };
-use common::payloads::{ Direction, Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
+use common::payloads::{ RelativeDirection, Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
+use radar_view_utils::RadarCell;
 
 mod payloads_utils;
 mod radar_view_utils;
@@ -86,7 +87,9 @@ fn register_team(team_name: &str, server_address_with_port: &str) {
             println!("Nombre de joueurs attendus : {}", register_team_response.expected_players);
             println!("Token d'inscription : {}", register_team_response.registration_token);
 
-            subscribe(server_address_with_port, "player1", &register_team_response.registration_token);
+           // for i in 0..register_team_response.expected_players {
+                subscribe(server_address_with_port, "toto", &register_team_response.registration_token);
+           // }
         }
         ServerPayload::RegisterTeamResult(Err(registration_error)) => {
             match registration_error {
@@ -134,27 +137,45 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
     match payloads_utils::receive_payload_from_server(&mut stream) {
         ServerPayload::RadarView(radar_view) => {
             println!("Received radar view : {}", radar_view);
+            let mut view = radar_view_utils::decode(&radar_view);
+            
+            let max_attempts = 10000;
+            let mut attempts = 0;
+            let mut next_move: RelativeDirection;
+
+            while attempts < max_attempts {
+                attempts+=1;
+
+                let center = 3;
+                let left_cell = view[center][center-1].clone();
+                let right_cell = view[center][center+1].clone();
+                let front_cell = view[center-1][center].clone();
+                
+                if      right_cell == RadarCell::Open { next_move = RelativeDirection::Right; }
+                else if front_cell == RadarCell::Open { next_move = RelativeDirection::Front; }
+                else if left_cell  == RadarCell::Open { next_move = RelativeDirection::Left; }
+                else                                  { next_move = RelativeDirection::Back; }
+
+                let move_player_payload = Payload::move_to(next_move);
+                payloads_utils::send_payload_to_server(&mut stream, &move_player_payload);
+
+                match payloads_utils::receive_payload_from_server(&mut stream) {
+                    ServerPayload::RadarView(radar_view) => {
+                        println!("Received radar view: {}", radar_view);
+                        view = radar_view_utils::decode(&radar_view);
+                    },
+                    ServerPayload::ActionError(action_error) => match action_error {
+                        common::payloads::ActionError::CannotPassThroughWall => {
+                            println!("CannotPassThroughWall - Changing direction");
+                            println!("current direction : {:?}", next_move);
+                        }
+                        _ => println!("Action error: {:?}", action_error),
+                    },
+                    _ => println!("Response not handled yet."),
+                }
+            }
         }
         _ => println!("Response not handled yet.")
-    }
-
-    //move_player(&mut stream, Direction::Left);
-    
+    }    
 }
 
-
-fn move_player(stream: &mut TcpStream, direction: Direction) {
-    let move_player_payload = Payload::move_to(direction);
-
-    payloads_utils::send_payload_to_server(stream, &move_player_payload);
-
-    match payloads_utils::receive_payload_from_server(stream) {
-        ServerPayload::ActionError(action_error) => match action_error {
-            common::payloads::ActionError::CannotPassThroughWall => println!("CannotPassThroughWall"),
-            common::payloads::ActionError::NoRunningChallenge => println!("NoRunningChallenge"),
-            common::payloads::ActionError::SolveChallengeFirst => println!("SolveChallengeFirst"),
-            common::payloads::ActionError::InvalidChallengeSolution => println!("InvalidChallengeSolution"),
-        }
-        _ => println!("Response not handled yet.")
-    }
-}

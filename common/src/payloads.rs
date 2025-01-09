@@ -9,14 +9,14 @@ pub enum Payload {
 }
 
 impl Payload {
-    pub fn move_to(direction: Direction) -> Self {
+    pub fn move_to(direction: RelativeDirection) -> Self {
         Payload::Action(Action::MoveTo(direction))
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Action {
-    MoveTo(Direction)
+    MoveTo(RelativeDirection)
 }
 
 
@@ -25,7 +25,16 @@ pub enum ServerPayload {
     RegisterTeamResult(Result<RegisterTeamOk, RegistrationError>),
     SubscribePlayerResult(SubscribePlayerResult),
     ActionError(ActionError),
-    RadarView(String)
+    RadarView(String),
+    Hint(Hint)
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Hint {
+    RelativeCompass { angle: f32 },
+    GridSize { columns: u32, rows: u32 },
+    Secret(u64),
+    SOSHelper
 }
 
 
@@ -69,21 +78,21 @@ pub enum ActionError {
 }
 
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Direction {
+#[derive(Serialize, Deserialize, Debug, Copy, Clone, PartialEq)]
+pub enum RelativeDirection {
     Left,
     Right,
-    Top,
-    Bottom
+    Back,
+    Front
 }
 
-impl Direction {
+impl RelativeDirection {
     pub fn to_string(&self) -> &str {
         match self {
-            Direction::Left   => "Left",
-            Direction::Right  => "Right",
-            Direction::Top    => "Top",
-            Direction::Bottom => "Bottom"
+            RelativeDirection::Left   => "Left",
+            RelativeDirection::Right  => "Right",
+            RelativeDirection::Back   => "Back",
+            RelativeDirection::Front  => "Front"
         }
     }
 }
