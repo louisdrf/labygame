@@ -3,6 +3,7 @@ pub enum RadarCell {
         Undefined,                   // 00 
         Open,                        // 01
         Wall,                        // 10
+        Exit,                        // 1000
         Unknown(String)              // unknown bits combination
 }
 
@@ -12,6 +13,7 @@ impl RadarCell {
             "00" | "1111" => RadarCell::Undefined,
             "01" | "0000" => RadarCell::Open,
             "10"   => RadarCell::Wall,
+            "1000" => RadarCell::Exit,
             _ => RadarCell::Unknown(bits.to_string())
         }
     }

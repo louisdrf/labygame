@@ -1,4 +1,5 @@
-use std::env;
+use std::time::Duration;
+use std::{env, thread};
 use std::net::TcpStream;
 use common::client_args::{ CommandArgument, CommandArgumentsList };
 use common::payloads::{ RelativeDirection, Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
@@ -138,19 +139,15 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
         ServerPayload::RadarView(radar_view) => {
             println!("Received radar view : {}", radar_view);
             let mut view = radar_view_utils::decode(&radar_view);
-            
-            let max_attempts = 10000;
-            let mut attempts = 0;
+            let center = 3;
+
             let mut next_move: RelativeDirection;
 
-            while attempts < max_attempts {
-                attempts+=1;
-
-                let center = 3;
-                let left_cell = view[center][center-1].clone();
-                let right_cell = view[center][center+1].clone();
-                let front_cell = view[center-1][center].clone();
-                
+            while view[center][center] != RadarCell::Exit {
+                let left_cell = view[center][center - 2].clone();
+                let right_cell = view[center][center + 2].clone();
+                let front_cell = view[center - 2][center].clone();
+            
                 if      right_cell == RadarCell::Open { next_move = RelativeDirection::Right; }
                 else if front_cell == RadarCell::Open { next_move = RelativeDirection::Front; }
                 else if left_cell  == RadarCell::Open { next_move = RelativeDirection::Left; }
@@ -161,18 +158,21 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
 
                 match payloads_utils::receive_payload_from_server(&mut stream) {
                     ServerPayload::RadarView(radar_view) => {
-                        println!("Received radar view: {}", radar_view);
                         view = radar_view_utils::decode(&radar_view);
                     },
                     ServerPayload::ActionError(action_error) => match action_error {
                         common::payloads::ActionError::CannotPassThroughWall => {
                             println!("CannotPassThroughWall - Changing direction");
                             println!("current direction : {:?}", next_move);
+                            println!("Received radar view: {}", radar_view);
+                            break;
                         }
                         _ => println!("Action error: {:?}", action_error),
                     },
                     _ => println!("Response not handled yet."),
                 }
+
+                thread::sleep(Duration::from_millis(200));
             }
         }
         _ => println!("Response not handled yet.")
