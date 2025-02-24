@@ -7,6 +7,7 @@ use radar_view_utils::RadarCell;
 
 mod payloads_utils;
 mod radar_view_utils;
+mod hint_utils;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -104,11 +105,12 @@ fn register_team(team_name: &str, server_address_with_port: &str) {
     }
 }
 
-fn select_best_move(view: &Vec<Vec<RadarCell>>) -> RelativeDirection {
+fn select_best_move(view: &Vec<Vec<RadarCell>>, hint_direction: Option<RelativeDirection>) -> RelativeDirection {
     let center = 3;
     let left_cell  = view[center][center - 2].clone();
     let right_cell = view[center][center + 2].clone();
     let front_cell = view[center - 2][center].clone();
+    let back_cell = view[center + 2][center].clone();
 
     // Check if objective `G` (GOAL) is visible and go directly to it
     for (i, row) in view.iter().enumerate() {
@@ -133,16 +135,22 @@ fn select_best_move(view: &Vec<Vec<RadarCell>>) -> RelativeDirection {
             }
         }
     }
-    // Classic strategy if no `G` (GOAL) found
-    if right_cell == RadarCell::Open {
-        return RelativeDirection::Right;
-    } else if front_cell == RadarCell::Open {
-        return RelativeDirection::Front;
-    } else if left_cell == RadarCell::Open {
-        return RelativeDirection::Left;
-    } else {
-        return RelativeDirection::Back;
+
+    if let Some(hint_dir) = hint_direction {
+        match hint_dir {
+            RelativeDirection::Right    if right_cell == RadarCell::Open => return RelativeDirection::Right,
+            RelativeDirection::Front    if front_cell == RadarCell::Open => return RelativeDirection::Front,
+            RelativeDirection::Left     if left_cell == RadarCell::Open =>  return RelativeDirection::Left,
+            RelativeDirection::Back     if back_cell == RadarCell::Open =>  return RelativeDirection::Back,
+            _ => println!("⚠️ Hint direction is blocked, switching to fallback strategy."),
+        }
     }
+
+    // Classic strategy if no `G` (GOAL) found
+    if      right_cell == RadarCell::Open   { return RelativeDirection::Right; } 
+    else if front_cell == RadarCell::Open   { return RelativeDirection::Front; } 
+    else if left_cell == RadarCell::Open    { return RelativeDirection::Left; } 
+    else                                    { return RelativeDirection::Back; }
 }
 
 /**
@@ -224,6 +232,8 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
 
 fn subscribe(server_address_with_port: &str, player_name: &str, registration_token: &str) {
     let mut stream = get_tcp_stream(&server_address_with_port);
+    let center = 3;
+    let mut hint_direction: Option<RelativeDirection> = None;
 
     let subscribe_player_payload = Payload::SubscribePlayer {
         name: player_name.to_string(),
@@ -262,15 +272,13 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
         }
     };
 
-    let center = 3;
-
     loop {
         if view[center][center] == RadarCell::Exit {
             println!("Exit reached! Stopping the game.");
             std::process::exit(0);
         }
 
-        let next_move = select_best_move(&view);
+        let next_move = select_best_move(&view, hint_direction);
 
         let move_player_payload = Payload::move_to(next_move);
         payloads_utils::send_payload_to_server(&mut stream, &move_player_payload);
@@ -280,12 +288,26 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
                 ServerPayload::RadarView(radar_view) => {
                     println!("Received radar view: {}", radar_view);
                     view = radar_view_utils::decode(&radar_view);
+                    hint_direction = None;
                     break;
                 },
                 ServerPayload::Hint(hint) => {
-                    println!("Hint received: {:?}", hint);
-                    println!("Waiting for a new RadarView...");
-                    continue;
+                    match hint {
+                        common::payloads::Hint::RelativeCompass { angle } => {
+                            println!("RelativeCompass received! Angle to Exit: {}°", angle);
+                            hint_direction = Some(hint_utils::direction_from_angle(angle));
+                        }
+                        common::payloads::Hint::GridSize { columns, rows } => {
+                            println!("Grid size received: {}x{}", columns, rows);
+                        }
+                        common::payloads::Hint::Secret(secret) => {
+                            println!("Secret received: {}", secret);
+                        }
+                        common::payloads::Hint::SOSHelper => {
+                            println!("SOSHelper received! Possible emergency situation.");
+                        }
+                    }
+                    continue; 
                 },
                 ServerPayload::ActionError(action_error) => {
                     match action_error {
