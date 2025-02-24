@@ -114,18 +114,22 @@ fn select_best_move(view: &Vec<Vec<RadarCell>>) -> RelativeDirection {
     for (i, row) in view.iter().enumerate() {
         for (j, cell) in row.iter().enumerate() {
             if *cell == RadarCell::Exit {
-                println!("-----------------------------------------------------------------------------------");
+                println!("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*--*-*");
                 println!("Goal detected at ({}, {})! Prioritizing movement...", i, j);
-                println!("-----------------------------------------------------------------------------------");
+                println!("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*--*-*-*-*-*-*-*-*-*-*-*-*--*-*");
+                let x;
                 if j > center {
-                    return RelativeDirection::Right;
+                    x =  RelativeDirection::Right;
                 } else if j < center {
-                    return RelativeDirection::Left;
+                    x =  RelativeDirection::Left;
                 } else if i < center {
-                    return RelativeDirection::Front;
+                    x =  RelativeDirection::Front;
                 } else {
-                    return RelativeDirection::Back;
+                    x = RelativeDirection::Back;
                 }
+                let move_player_payload = Payload::move_to(x);
+                println!("Exit reached! Stopping the game.");
+                std::process::exit(0);
             }
         }
     }
@@ -145,6 +149,7 @@ fn select_best_move(view: &Vec<Vec<RadarCell>>) -> RelativeDirection {
  * send a SubscribePlayer payload to server, handle response
  * then handle RadarView server payload reception
  */
+ /*
 fn subscribe(server_address_with_port: &str, player_name: &str, registration_token: &str) {
     let mut stream = get_tcp_stream(&server_address_with_port);
 
@@ -214,5 +219,88 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
         }
         _ => println!("Response not handled yet.")
     }    
+}
+*/
+
+fn subscribe(server_address_with_port: &str, player_name: &str, registration_token: &str) {
+    let mut stream = get_tcp_stream(&server_address_with_port);
+
+    let subscribe_player_payload = Payload::SubscribePlayer {
+        name: player_name.to_string(),
+        registration_token : registration_token.to_string()
+    };
+
+    payloads_utils::send_payload_to_server(&mut stream, &subscribe_player_payload);
+
+    // receive  player subscription confirmation
+    match payloads_utils::receive_payload_from_server(&mut stream) {
+        ServerPayload::SubscribePlayerResult(SubscribePlayerResult::Ok) => {
+            println!("Player subscribtion succeed !");
+        }
+        ServerPayload::SubscribePlayerResult(SubscribePlayerResult::Err(registration_error)) => {
+            match registration_error {
+                RegistrationError::AlreadyRegistered => println!("Team already registered"),
+                RegistrationError::InvalidName => println!("Invalid name for team."),
+                RegistrationError::InvalidRegistrationToken => println!("Invalid registration token."),
+                RegistrationError::TooManyPlayers => println!("Too many players.")
+            }
+        }
+        _ => println!("Response not handled yet.")
+    }
+
+     // receive radar view
+    let mut view = loop {
+        match payloads_utils::receive_payload_from_server(&mut stream) {
+            ServerPayload::RadarView(radar_view) => {
+                println!("Received radar view : {}", radar_view);
+                break radar_view_utils::decode(&radar_view);
+            },
+            other => {
+                println!("Ignoring non-RadarView message: {:?}", other);
+                continue;
+            },
+        }
+    };
+
+    let center = 3;
+
+    loop {
+        if view[center][center] == RadarCell::Exit {
+            println!("Exit reached! Stopping the game.");
+            std::process::exit(0);
+        }
+
+        let next_move = select_best_move(&view);
+
+        let move_player_payload = Payload::move_to(next_move);
+        payloads_utils::send_payload_to_server(&mut stream, &move_player_payload);
+
+        loop {
+            match payloads_utils::receive_payload_from_server(&mut stream) {
+                ServerPayload::RadarView(radar_view) => {
+                    println!("Received radar view: {}", radar_view);
+                    view = radar_view_utils::decode(&radar_view);
+                    break;
+                },
+                ServerPayload::Hint(hint) => {
+                    println!("Hint received: {:?}", hint);
+                    println!("Waiting for a new RadarView...");
+                    continue;
+                },
+                ServerPayload::ActionError(action_error) => {
+                    match action_error {
+                        common::payloads::ActionError::CannotPassThroughWall => {
+                            println!("Cannot pass through wall! Changing direction...");
+                            continue; 
+                        }
+                        _ => println!("Action error: {:?}", action_error),
+                    }
+                },
+                other => {
+                    println!("Unexpected message, ignoring: {:?}", other);
+                },
+            }
+        }
+    }
 }
 
