@@ -41,6 +41,25 @@ pub fn receive_payload_from_server(stream: &mut TcpStream) -> ServerPayload {
 
     let server_response: ServerPayload = serde_json::from_slice(&buffer).unwrap();
 
+    match &server_response {
+        ServerPayload::RadarView(_) => {
+            println!("New RadarView received.");
+        },
+        ServerPayload::Hint(hint) => {
+            println!("Hint received: {:?}", hint);
+        },
+        ServerPayload::ActionError(error) => {
+            match error {
+                common::payloads::ActionError::CannotPassThroughWall => {
+                    println!("Wall detected! Need to recalculate path.");
+                },
+                _ => println!("Action error received: {:?}", error),
+            }
+        },
+        _ => {
+            println!("Received other server message: {:?}", server_response);
+        }
+    }
+
     server_response
 }
- 

@@ -3,7 +3,7 @@ pub enum RadarCell {
         Undefined,                   // 00 
         Open,                        // 01
         Wall,                        // 10
-        Exit,                        // 1000
+        Exit,                        // 1000 ('G')
         Unknown(String)              // unknown bits combination
 }
 

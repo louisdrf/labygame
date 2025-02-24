@@ -104,6 +104,43 @@ fn register_team(team_name: &str, server_address_with_port: &str) {
     }
 }
 
+fn select_best_move(view: &Vec<Vec<RadarCell>>) -> RelativeDirection {
+    let center = 3;
+    let left_cell  = view[center][center - 2].clone();
+    let right_cell = view[center][center + 2].clone();
+    let front_cell = view[center - 2][center].clone();
+
+    // Check if objective `G` (GOAL) is visible and go directly to it
+    for (i, row) in view.iter().enumerate() {
+        for (j, cell) in row.iter().enumerate() {
+            if *cell == RadarCell::Exit {
+                println!("-----------------------------------------------------------------------------------");
+                println!("Goal detected at ({}, {})! Prioritizing movement...", i, j);
+                println!("-----------------------------------------------------------------------------------");
+                if j > center {
+                    return RelativeDirection::Right;
+                } else if j < center {
+                    return RelativeDirection::Left;
+                } else if i < center {
+                    return RelativeDirection::Front;
+                } else {
+                    return RelativeDirection::Back;
+                }
+            }
+        }
+    }
+    // Classic strategy if no `G` (GOAL) found
+    if right_cell == RadarCell::Open {
+        return RelativeDirection::Right;
+    } else if front_cell == RadarCell::Open {
+        return RelativeDirection::Front;
+    } else if left_cell == RadarCell::Open {
+        return RelativeDirection::Left;
+    } else {
+        return RelativeDirection::Back;
+    }
+}
+
 /**
  * send a SubscribePlayer payload to server, handle response
  * then handle RadarView server payload reception
