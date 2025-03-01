@@ -11,3 +11,17 @@ pub fn direction_from_angle(angle: f32) -> RelativeDirection {
         RelativeDirection::Left    // West (270°) ➜ Left
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_direction_from_angle() {
+        assert_eq!(direction_from_angle(0.0), RelativeDirection::Front);
+        assert_eq!(direction_from_angle(90.0), RelativeDirection::Right);
+        assert_eq!(direction_from_angle(180.0), RelativeDirection::Back);
+        assert_eq!(direction_from_angle(270.0), RelativeDirection::Left);
+        assert_eq!(direction_from_angle(360.0), RelativeDirection::Front);
+    }
+}
