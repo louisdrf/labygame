@@ -1,6 +1,7 @@
 use std::time::Duration;
 use std::{env, thread};
 use std::net::TcpStream;
+use rand::random_range;
 use common::client_args::{ CommandArgument, CommandArgumentsList };
 use common::payloads::{ RelativeDirection, Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
 use radar_view_utils::RadarCell;
@@ -105,12 +106,24 @@ fn register_team(team_name: &str, server_address_with_port: &str) {
     }
 }
 
-fn select_best_move(view: &Vec<Vec<RadarCell>>, hint_direction: Option<RelativeDirection>) -> RelativeDirection {
+
+fn select_best_move(view: &Vec<Vec<RadarCell>>, hint_direction: Option<RelativeDirection>, visited_tiles: &mut Vec<(i32,i32,RelativeDirection)> ) -> RelativeDirection {
     let center = 3;
-    let left_cell  = view[center][center - 2].clone();
     let right_cell = view[center][center + 2].clone();
     let front_cell = view[center - 2][center].clone();
+    let left_cell  = view[center][center - 2].clone();
     let back_cell = view[center + 2][center].clone();
+    let cells = vec![
+        (right_cell, RelativeDirection::Right),
+        (front_cell, RelativeDirection::Front),
+        (left_cell, RelativeDirection::Left),
+        (back_cell, RelativeDirection::Back)
+    ];
+    let open_directions: Vec<RelativeDirection> = cells
+        .into_iter()
+        .filter(|(cell, _)| *cell == RadarCell::Open)
+        .map(|(_,direction)| direction)
+        .collect();
 
     // Check if objective `G` (GOAL) is visible and go directly to it
     for (i, row) in view.iter().enumerate() {
@@ -137,103 +150,32 @@ fn select_best_move(view: &Vec<Vec<RadarCell>>, hint_direction: Option<RelativeD
     }
 
     if let Some(hint_dir) = hint_direction {
-        match hint_dir {
-            RelativeDirection::Right    if right_cell == RadarCell::Open => return RelativeDirection::Right,
-            RelativeDirection::Front    if front_cell == RadarCell::Open => return RelativeDirection::Front,
-            RelativeDirection::Left     if left_cell == RadarCell::Open =>  return RelativeDirection::Left,
-            RelativeDirection::Back     if back_cell == RadarCell::Open =>  return RelativeDirection::Back,
-            _ => println!("⚠️ Hint direction is blocked, switching to fallback strategy."),
+        if open_directions.contains(&hint_dir) {
+            return save_next_tile(hint_dir, visited_tiles);
         }
     }
 
-    // Classic strategy if no `G` (GOAL) found
-    if      right_cell == RadarCell::Open   { return RelativeDirection::Right; } 
-    else if front_cell == RadarCell::Open   { return RelativeDirection::Front; } 
-    else if left_cell == RadarCell::Open    { return RelativeDirection::Left; } 
-    else                                    { return RelativeDirection::Back; }
+    for direction in open_directions.iter() {
+        let next_tile = gen_next_tile(*direction, visited_tiles);
+        if !visited_tiles.contains(&next_tile) {
+            return save_next_tile(*direction, visited_tiles);
+        }
+    }
+    
+    let random_index = random_range(0..open_directions.len());
+    save_next_tile(open_directions[random_index], visited_tiles)
 }
+
 
 /**
  * send a SubscribePlayer payload to server, handle response
  * then handle RadarView server payload reception
  */
- /*
-fn subscribe(server_address_with_port: &str, player_name: &str, registration_token: &str) {
-    let mut stream = get_tcp_stream(&server_address_with_port);
-
-    let subscribe_player_payload = Payload::SubscribePlayer {
-        name: player_name.to_string(),
-        registration_token : registration_token.to_string()
-    };
-    
-    payloads_utils::send_payload_to_server(&mut stream, &subscribe_player_payload);
-
-    // receive  player subscription confirmation
-    match payloads_utils::receive_payload_from_server(&mut stream) {
-        ServerPayload::SubscribePlayerResult(SubscribePlayerResult::Ok) => {
-            println!("Player subscribtion succeed !");
-        }
-        ServerPayload::SubscribePlayerResult(SubscribePlayerResult::Err(registration_error)) => {
-            match registration_error {
-                RegistrationError::AlreadyRegistered => println!("Team already registered"),
-                RegistrationError::InvalidName => println!("Invalid name for team."),
-                RegistrationError::InvalidRegistrationToken => println!("Invalid registration token."),
-                RegistrationError::TooManyPlayers => println!("Too many players.")
-            }
-        }
-        _ => println!("Response not handled yet.")
-    }
-
-    // receive radar view
-    match payloads_utils::receive_payload_from_server(&mut stream) {
-        ServerPayload::RadarView(radar_view) => {
-            println!("Received radar view : {}", radar_view);
-            let mut view = radar_view_utils::decode(&radar_view);
-            let center = 3;
-
-            let mut next_move: RelativeDirection;
-
-            while view[center][center] != RadarCell::Exit {
-                let left_cell = view[center][center - 2].clone();
-                let right_cell = view[center][center + 2].clone();
-                let front_cell = view[center - 2][center].clone();
-            
-                if      right_cell == RadarCell::Open { next_move = RelativeDirection::Right; }
-                else if front_cell == RadarCell::Open { next_move = RelativeDirection::Front; }
-                else if left_cell  == RadarCell::Open { next_move = RelativeDirection::Left; }
-                else                                  { next_move = RelativeDirection::Back; }
-
-                let move_player_payload = Payload::move_to(next_move);
-                payloads_utils::send_payload_to_server(&mut stream, &move_player_payload);
-
-                match payloads_utils::receive_payload_from_server(&mut stream) {
-                    ServerPayload::RadarView(radar_view) => {
-                        view = radar_view_utils::decode(&radar_view);
-                    },
-                    ServerPayload::ActionError(action_error) => match action_error {
-                        common::payloads::ActionError::CannotPassThroughWall => {
-                            println!("CannotPassThroughWall - Changing direction");
-                            println!("current direction : {:?}", next_move);
-                            println!("Received radar view: {}", radar_view);
-                            break;
-                        }
-                        _ => println!("Action error: {:?}", action_error),
-                    },
-                    _ => println!("Response not handled yet."),
-                }
-
-                thread::sleep(Duration::from_millis(200));
-            }
-        }
-        _ => println!("Response not handled yet.")
-    }    
-}
-*/
-
 fn subscribe(server_address_with_port: &str, player_name: &str, registration_token: &str) {
     let mut stream = get_tcp_stream(&server_address_with_port);
     let center = 3;
     let mut hint_direction: Option<RelativeDirection> = None;
+    let mut visited_tiles: Vec<(i32,i32, RelativeDirection)> = vec![(0,0,RelativeDirection::Front)];
 
     let subscribe_player_payload = Payload::SubscribePlayer {
         name: player_name.to_string(),
@@ -278,8 +220,7 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
             std::process::exit(0);
         }
 
-        let next_move = select_best_move(&view, hint_direction);
-
+        let next_move = select_best_move(&view, hint_direction, &mut visited_tiles);
         let move_player_payload = Payload::move_to(next_move);
         payloads_utils::send_payload_to_server(&mut stream, &move_player_payload);
 
@@ -326,3 +267,50 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
     }
 }
 
+
+fn save_next_tile(direction: RelativeDirection, visited_tiles: &mut Vec<(i32,i32,RelativeDirection)>) -> RelativeDirection {
+    let next_tile = gen_next_tile(direction, visited_tiles);
+    visited_tiles.push(next_tile);
+    direction
+}
+
+
+fn gen_next_tile(direction: RelativeDirection, visited_tiles: &Vec<(i32, i32, RelativeDirection)>) -> (i32, i32, RelativeDirection) {
+    if let Some(&(x, y, c)) = visited_tiles.last() {
+        match direction {
+            RelativeDirection::Front => {
+                return match c {
+                    RelativeDirection::Front => (x, y + 1, RelativeDirection::Front),
+                    RelativeDirection::Right => (x + 1, y, RelativeDirection::Right),
+                    RelativeDirection::Back => (x, y - 1, RelativeDirection::Back),
+                    RelativeDirection::Left => (x - 1, y, RelativeDirection::Left)
+                };
+            },
+            RelativeDirection::Right => {
+                return match c {
+                    RelativeDirection::Front => (x + 1, y, RelativeDirection::Right),
+                    RelativeDirection::Right => (x, y - 1, RelativeDirection::Back),
+                    RelativeDirection::Back => (x - 1, y, RelativeDirection::Left),
+                    RelativeDirection::Left => (x, y + 1, RelativeDirection::Front)
+                };
+            },
+            RelativeDirection::Back => {
+                return match c {
+                    RelativeDirection::Front => (x, y - 1, RelativeDirection::Back),
+                    RelativeDirection::Right => (x - 1, y, RelativeDirection::Left),
+                    RelativeDirection::Back => (x, y + 1, RelativeDirection::Front),
+                    RelativeDirection::Left => (x + 1, y, RelativeDirection::Right)
+                };
+            },
+            RelativeDirection::Left => {
+                return match c {
+                    RelativeDirection::Front => (x - 1, y, RelativeDirection::Left),
+                    RelativeDirection::Right => (x, y + 1, RelativeDirection::Front),
+                    RelativeDirection::Back => (x + 1, y, RelativeDirection::Right),
+                    RelativeDirection::Left => (x, y - 1, RelativeDirection::Back)
+                };
+            }
+        }
+    }
+    (0, 0, RelativeDirection::Front)
+}
