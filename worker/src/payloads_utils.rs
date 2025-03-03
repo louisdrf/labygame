@@ -1,6 +1,5 @@
 use std::{io::{Read, Write}, net::TcpStream};
-
-use common::payloads::{Payload, ServerPayload};
+use common::payloads::{Payload, ServerPayload, ActionError};
 
 
 pub fn to_tcp_payload(payload: &Payload) -> Vec<u8> {
@@ -31,7 +30,7 @@ pub fn send_payload_to_server(stream: &mut TcpStream, payload: &Payload) {
 }
 
 pub fn receive_payload_from_server(stream: &mut TcpStream) -> ServerPayload {
-    
+
     let mut payload_size_buffer = [0u8; 4];
     stream.read_exact(&mut payload_size_buffer).unwrap();
     let payload_size = u32::from_le_bytes(payload_size_buffer) as usize;
@@ -40,7 +39,7 @@ pub fn receive_payload_from_server(stream: &mut TcpStream) -> ServerPayload {
     stream.read_exact(&mut buffer).unwrap();
 
     let server_response: ServerPayload = serde_json::from_slice(&buffer).unwrap();
-
+    
     match &server_response {
         ServerPayload::RadarView(_) => {
             println!("New RadarView received.");
@@ -50,10 +49,18 @@ pub fn receive_payload_from_server(stream: &mut TcpStream) -> ServerPayload {
         },
         ServerPayload::ActionError(error) => {
             match error {
-                common::payloads::ActionError::CannotPassThroughWall => {
+                ActionError::CannotPassThroughWall => {
                     println!("Wall detected! Need to recalculate path.");
-                },
-                _ => println!("Action error received: {:?}", error),
+                }
+                ActionError::NoRunningChallenge => {
+                    println!("ERREUR : Aucun challenge en cours !");
+                }
+                ActionError::SolveChallengeFirst => {
+                    println!("ERREUR : Il faut résoudre un challenge avant d'agir !");
+                }
+                ActionError::InvalidChallengeSolution => {
+                    println!("ERREUR : La solution du challenge est incorrecte !");
+                }
             }
         },
         _ => {

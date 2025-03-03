@@ -16,12 +16,14 @@ impl CommandArgument {
 pub enum CommandArgumentsList {
     Port,
     Address,
-    GroupName
+    GroupName,
+    Players
 }
 
 impl CommandArgumentsList {
     pub fn from_command_name(arg_name: &str) -> Option<Self> {
         match arg_name {
+            "--players" => Some(CommandArgumentsList::Players),
             "--address" => Some(CommandArgumentsList::Address),
             "--port"    => Some(CommandArgumentsList::Port),
             "--group"   => Some(CommandArgumentsList::GroupName),

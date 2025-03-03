@@ -6,6 +6,7 @@ pub enum Payload {
     RegisterTeam { name: String },
     SubscribePlayer { name: String, registration_token: String },
     Action(Action),
+    SolveChallenge { answer: String } 
 }
 
 impl Payload {
@@ -26,7 +27,13 @@ pub enum ServerPayload {
     SubscribePlayerResult(SubscribePlayerResult),
     ActionError(ActionError),
     RadarView(String),
-    Hint(Hint)
+    Hint(Hint),
+    Challenge(Challenge)
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Challenge {
+    pub SecretSumModulo: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

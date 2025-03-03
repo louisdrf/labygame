@@ -1,14 +1,19 @@
 use std::time::Duration;
 use std::{env, thread};
+use std::sync::Arc;
 use std::net::TcpStream;
 use rand::random_range;
 use common::client_args::{ CommandArgument, CommandArgumentsList };
-use common::payloads::{ RelativeDirection, Payload, RegistrationError, ServerPayload, SubscribePlayerResult };
+use common::payloads::{ RelativeDirection, Payload, RegistrationError, ServerPayload, SubscribePlayerResult, Challenge, ActionError };
+// use common::payloads::{ SolveChallenge };
+// use common::Challenge::{ SecretSumModulo };
 use radar_view_utils::RadarCell;
+use challenge_utils::Secrets;
 
 mod payloads_utils;
 mod radar_view_utils;
 mod hint_utils;
+mod challenge_utils;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -16,6 +21,7 @@ fn main() {
     let mut address = String::from("localhost");
     let mut port = String::from("8778");
     let mut team_name: String = String::from("team1");
+    let mut players: u16 = 1;
 
     for arg in &args[1..] {
 
@@ -27,6 +33,14 @@ fn main() {
                 Some(CommandArgumentsList::Port)    => port = command_argument.value,
                 Some(CommandArgumentsList::Address) => address = command_argument.value,
                 Some(CommandArgumentsList::GroupName) => team_name = command_argument.value,
+                Some(CommandArgumentsList::Players) => {
+                    if let Ok(parsed) = command_argument.value.parse::<u16>() {
+                        players = parsed;
+                    } else {
+                        eprintln!("Invalid number of players: {}", command_argument.value);
+                        std::process::exit(1);
+                    }
+                }
                 None => {
                     eprintln!("Unknown argument name : {}", command_argument.name);
                     std::process::exit(1);
@@ -41,7 +55,7 @@ fn main() {
 
     let server_address_with_port = format!("{}:{}", address, port);
 
-    register_team(&team_name, &server_address_with_port);
+    register_team(players, &team_name, &server_address_with_port);
 }
 
 
@@ -77,7 +91,7 @@ fn get_tcp_stream(server_address_with_port: &str) -> TcpStream  {
 /**
  * send RegisterTeam payload to server and handle response
  */
-fn register_team(team_name: &str, server_address_with_port: &str) {
+fn register_team(players: u16, team_name: &str, server_address_with_port: &str) {
     let mut stream = get_tcp_stream(&server_address_with_port);
 
     let register_team_payload = Payload::RegisterTeam { name: team_name.to_string() };
@@ -90,9 +104,9 @@ fn register_team(team_name: &str, server_address_with_port: &str) {
             println!("Nombre de joueurs attendus : {}", register_team_response.expected_players);
             println!("Token d'inscription : {}", register_team_response.registration_token);
 
-           // for i in 0..register_team_response.expected_players {
-                subscribe(server_address_with_port, "toto", &register_team_response.registration_token);
-           // }
+            for i in 0..players {
+                subscribe(server_address_with_port, &format!("{} {}", "player", i), &register_team_response.registration_token);
+            }
         }
         ServerPayload::RegisterTeamResult(Err(registration_error)) => {
             match registration_error {
@@ -176,6 +190,9 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
     let center = 3;
     let mut hint_direction: Option<RelativeDirection> = None;
     let mut visited_tiles: Vec<(i32,i32, RelativeDirection)> = vec![(0,0,RelativeDirection::Front)];
+    let mut secrets = Arc::new(Secrets::new());
+    let secrets_clone = Arc::clone(&secrets);
+    
 
     let subscribe_player_payload = Payload::SubscribePlayer {
         name: player_name.to_string(),
@@ -226,6 +243,14 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
 
         loop {
             match payloads_utils::receive_payload_from_server(&mut stream) {
+                ServerPayload::Challenge(Challenge { SecretSumModulo }) => {
+                    println!("Received challenge: SecretSumModulo {}", SecretSumModulo);
+                    let res = secrets.sum_modulo(SecretSumModulo);
+                    let answer_to_server = Payload::SolveChallenge {
+                        answer: res.to_string(),
+                    };
+                    payloads_utils::send_payload_to_server(&mut stream, &answer_to_server);
+                },
                 ServerPayload::RadarView(radar_view) => {
                     println!("Received radar view: {}", radar_view);
                     view = radar_view_utils::decode(&radar_view);
@@ -243,6 +268,7 @@ fn subscribe(server_address_with_port: &str, player_name: &str, registration_tok
                         }
                         common::payloads::Hint::Secret(secret) => {
                             println!("Secret received: {}", secret);
+                            secrets_clone.update_secret(secret.into());
                         }
                         common::payloads::Hint::SOSHelper => {
                             println!("SOSHelper received! Possible emergency situation.");
